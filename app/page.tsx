@@ -1,5 +1,6 @@
 "use client";
 
+import Navbar from "@/components/Navbar";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
 import { useState, useEffect } from "react";
 
@@ -139,116 +140,6 @@ export default function LandingPage() {
       <CTA />
       <Footer />
     </div>
-  );
-}
-
-function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { scrollY } = useScroll();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = scrollY.on("change", (latest) => {
-      setScrolled(latest > 50);
-    });
-    return () => unsubscribe();
-  }, [scrollY]);
-
-  return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      className={`fixed left-0 right-0 top-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${
-        scrolled
-          ? "border-white/20 bg-white/80 dark:border-teal-800/30 dark:bg-slate-950/80"
-          : "border-white/20 bg-white/10 dark:border-teal-800/30 dark:bg-slate-950/30"
-      }`}
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex cursor-pointer items-center gap-2"
-        >
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 shadow-lg shadow-teal-500/25">
-            <motion.span
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-              className="text-xl"
-            >
-              ⚕️
-            </motion.span>
-          </div>
-          <h1 className="text-xl font-bold bg-gradient-to-br from-teal-600 via-cyan-500 to-teal-400 bg-clip-text text-transparent">
-            VoiceMed AI
-          </h1>
-        </motion.div>
-
-        {/* Desktop Menu */}
-        <div className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link, index) => (
-            <motion.a
-              key={link.name}
-              href={link.href}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -2 }}
-              className="group relative text-sm font-medium text-teal-700 transition-all"
-            >
-              {link.name}
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gradient-to-r from-teal-600 to-cyan-500 transition-all duration-300 group-hover:w-full" />
-            </motion.a>
-          ))}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-teal-500 via-teal-400 to-cyan-400 px-6 py-2 font-medium text-white shadow-lg shadow-teal-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/40 hover:-translate-y-0.5"
-          >
-            <span className="relative z-10">Get Started</span>
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-br from-white/20 via-white/10 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
-          </motion.button>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          <div className="space-y-1.5">
-            <span className={`block h-0.5 w-6 bg-teal-800 dark:bg-teal-200 ${mobileMenuOpen ? "rotate-45 translate-y-2" : ""}`} />
-            <span className={`block h-0.5 w-6 bg-teal-800 dark:bg-teal-200 ${mobileMenuOpen ? "opacity-0" : ""}`} />
-            <span className={`block h-0.5 w-6 bg-teal-800 dark:bg-teal-200 ${mobileMenuOpen ? "-rotate-45 -translate-y-2" : ""}`} />
-          </div>
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="border-b border-white/20 bg-white/60 backdrop-blur-xl dark:border-teal-800/30 dark:bg-slate-950/60 md:hidden"
-        >
-          <div className="flex flex-col gap-4 px-4 py-4">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-sm font-medium text-teal-700 dark:text-teal-300"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {link.name}
-              </a>
-            ))}
-            <button className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 py-2 font-medium text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/40">
-              <span className="relative z-10">Get Started</span>
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-br from-white/20 via-white/10 to-transparent transition-transform duration-500 group-hover:translate-x-0" />
-            </button>
-          </div>
-        </motion.div>
-      )}
-    </motion.nav>
   );
 }
 
@@ -675,11 +566,10 @@ function Pricing() {
               whileHover={{ y: -8, scale: 1.02 }}
               transition={{ duration: 0.3 }}
               viewport={{ once: true }}
-              className={`relative cursor-pointer rounded-2xl border p-8 backdrop-blur-md transition-all duration-300 hover:shadow-2xl ${
-                plan.popular
-                  ? "border-teal-500/50 bg-gradient-to-br from-teal-500/20 via-cyan-500/20 to-teal-500/20 shadow-xl shadow-teal-500/10 dark:border-teal-400/50 dark:from-teal-500/10 dark:via-cyan-500/10 dark:to-teal-500/10"
-                  : "border-white/30 bg-white/40 shadow-lg hover:shadow-xl dark:border-teal-800/30 dark:bg-slate-950/40"
-              }`}
+              className={`relative cursor-pointer rounded-2xl border p-8 backdrop-blur-md transition-all duration-300 hover:shadow-2xl ${plan.popular
+                ? "border-teal-500/50 bg-gradient-to-br from-teal-500/20 via-cyan-500/20 to-teal-500/20 shadow-xl shadow-teal-500/10 dark:border-teal-400/50 dark:from-teal-500/10 dark:via-cyan-500/10 dark:to-teal-500/10"
+                : "border-white/30 bg-white/40 shadow-lg hover:shadow-xl dark:border-teal-800/30 dark:bg-slate-950/40"
+                }`}
             >
               {plan.popular && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 px-4 py-1 text-xs font-bold text-white shadow-lg">
