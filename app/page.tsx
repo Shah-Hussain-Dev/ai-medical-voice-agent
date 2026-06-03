@@ -1,136 +1,146 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { motion, useScroll, useTransform, useSpring } from "motion/react";
-import { useState, useEffect } from "react";
-
-const navLinks = [
-  { name: "Features", href: "#features" },
-  { name: "How It Works", href: "#how-it-works" },
-  { name: "Pricing", href: "#pricing" },
-  { name: "About", href: "#about" },
-];
+import { motion } from "motion/react";
+import Link from "next/link";
+import { 
+  Stethoscope, 
+  Mic, 
+  ShieldCheck, 
+  Clock, 
+  Sparkles, 
+  Activity, 
+  FileText, 
+  Check, 
+  ArrowRight, 
+  Dna, 
+  FileCheck, 
+  Brain, 
+  Star
+} from "lucide-react";
 
 const features = [
   {
-    icon: "🎙️",
+    icon: Mic,
     title: "Voice-Powered Consultations",
-    description: "Speak naturally with our AI doctor. No typing required — just describe your symptoms and get instant responses.",
+    description: "Speak naturally to input symptoms. Our audio engine transcribes, processes, and structured-formats medical inputs in real-time.",
   },
   {
-    icon: "📋",
-    title: "Detailed Medical Reports",
-    description: "Receive comprehensive medical reports with diagnosis, treatment recommendations, and next steps.",
+    icon: FileText,
+    title: "Detailed Clinical Reports",
+    description: "Receive comprehensive, download-ready clinical reports detailing symptom summaries, severity scoring, and assessment suggestions.",
   },
   {
-    icon: "🕐",
-    title: "24/7 Availability",
-    description: "Access medical consultations anytime, anywhere. No waiting rooms, no appointments needed.",
+    icon: Clock,
+    title: "Instant 24/7 Care Support",
+    description: "Get immediate medical assessments anytime, anywhere. Bypass scheduling friction and waiting rooms for instant care advice.",
   },
   {
-    icon: "🔒",
-    title: "HIPAA Compliant",
-    description: "Your health data is protected with enterprise-grade encryption and strict privacy standards.",
+    icon: ShieldCheck,
+    title: "HIPAA Compliant Security",
+    description: "Patient health data is secured with advanced AES-256 encryption. We enforce rigorous HIPAA privacy protocols for all transcripts.",
   },
   {
-    icon: "💊",
-    title: "Smart Medication Suggestions",
-    description: "Get AI-generated medication recommendations based on your symptoms and medical history.",
+    icon: Brain,
+    title: "AI Medical Intelligence",
+    description: "Cross-references multi-dimensional clinical knowledge databases to deliver highly accurate, guideline-aligned assessments.",
   },
   {
-    icon: "📱",
-    title: "Multi-Device Support",
-    description: "Access your medical reports and consultation history from any device — phone, tablet, or desktop.",
+    icon: Dna,
+    title: "EHR-Ready Integration",
+    description: "Seamlessly export generated reports, vital structures, and diagnostic suggestions straight into your provider's EHR database.",
   },
 ];
 
 const steps = [
   {
     step: "01",
-    title: "Start Your Consultation",
-    description: "Click the microphone button and describe your symptoms in your own words. Our AI listens and understands.",
+    title: "Record Symptoms",
+    description: "Activate the clinical voice intake. Describe patient signs, pain location, duration, and baseline vitals naturally.",
   },
   {
     step: "02",
-    title: "AI Medical Analysis",
-    description: "Our advanced AI processes your symptoms, cross-references medical databases, and generates a preliminary assessment.",
+    title: "AI Clinical Analysis",
+    description: "Our localized healthcare models process the voice data, cross-reference medical literature, and formulate clinical ratings.",
   },
   {
     step: "03",
-    title: "Receive Your Report",
-    description: "Get a detailed medical report with diagnosis, treatment recommendations, and actionable next steps.",
+    title: "Generate EHR Report",
+    description: "Review a beautifully structured PDF/EHR-compliant clinical report with active diagnosis support and recommendations.",
   },
 ];
 
 const testimonials = [
   {
-    name: "Sarah M.",
-    role: "Patient",
-    content: "Incredible experience! I got a proper diagnosis within minutes without leaving my home. The medical report was detailed and easy to understand.",
+    name: "Dr. Sarah M.",
+    role: "Emergency Physician",
+    content: "VoiceMed has completely optimized our front-desk patient sorting. The voice-to-assessment accuracy is stunning and cuts sorting times in half.",
     rating: 5,
   },
   {
-    name: "Dr. James K.",
-    role: "Physician",
-    content: "As a doctor, I'm impressed by the accuracy of the AI consultations. It's a great tool for preliminary assessments and patient triage.",
+    name: "James K.",
+    role: "Outpatient Care Director",
+    content: "The HIPAA-compliant structure and seamless PDF report exports allow our clinicians to quickly update active electronic health records.",
     rating: 5,
   },
   {
     name: "Emily R.",
-    role: "Patient",
-    content: "The voice interface is so intuitive. I was nervous about AI medical advice, but the thorough report gave me confidence in the diagnosis.",
+    role: "Family Nurse Practitioner",
+    content: "An intuitive layout combined with a highly responsive audio intake. It handles clinical jargon flawlessly and drafts solid primary assessments.",
     rating: 5,
   },
 ];
 
 const plans = [
   {
-    name: "Basic",
-    price: "Free",
-    description: "Perfect for trying out the service",
+    name: "Starter Pack",
+    price: "$4.99",
+    description: "Ideal for quick symptoms verification",
     features: [
-      "3 consultations per month",
-      "Basic medical reports",
-      "Email support",
+      "10 voice consultation credits",
+      "Standard audio processing",
+      "Immediate AI clinical response",
+      "Printable PDF reports",
+      "Secure encrypted storage",
     ],
-    cta: "Get Started",
+    cta: "Purchase Pack",
     popular: false,
   },
   {
-    name: "Pro",
-    price: "$19",
-    period: "/month",
-    description: "Best for regular users",
+    name: "Clinician Choice",
+    price: "$19.99",
+    description: "Perfect for active practitioners",
     features: [
-      "Unlimited consultations",
-      "Detailed medical reports",
-      "Priority support",
-      "Medication reminders",
-      "Medical history tracking",
+      "50 voice consultation credits",
+      "High-priority voice engine",
+      "Detailed clinical assessment reports",
+      "Exportable EHR transcripts",
+      "Dedicated email support",
+      "Medication checking flags",
     ],
-    cta: "Start Free Trial",
+    cta: "Start Clinician Pack",
     popular: true,
   },
   {
-    name: "Family",
-    price: "$39",
-    period: "/month",
-    description: "Care for your entire family",
+    name: "Professional Plan",
+    price: "$49.99",
+    description: "Designed for small clinics & groups",
     features: [
-      "Everything in Pro",
-      "Up to 5 family members",
-      "Family medical history",
-      "Pediatric consultations",
-      "24/7 phone support",
+      "150 voice consultation credits",
+      "Ultra-low latency audio processing",
+      "Advanced clinical coding logs",
+      "Developer API tokens",
+      "Priority customer service",
+      "Multi-agent assessment suite",
     ],
-    cta: "Start Free Trial",
+    cta: "Start Pro Plan",
     popular: false,
   },
 ];
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-teal-100 dark:from-slate-950 dark:via-teal-950 dark:to-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
       <Navbar />
       <Hero />
       <Features />
@@ -144,207 +154,228 @@ export default function LandingPage() {
 }
 
 function Hero() {
-  const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 500], [0, 150]);
-  const y2 = useTransform(scrollY, [0, 500], [0, -100]);
-
   return (
-    <section className="relative pt-32 pb-20 overflow-hidden">
-      {/* Animated Background decorations */}
-      <div className="absolute inset-0 overflow-hidden">
+    <section className="relative pt-32 pb-24 overflow-hidden bg-gradient-to-b from-emerald-50/60 via-slate-50 to-white dark:from-slate-900/40 dark:via-slate-950 dark:to-slate-950">
+      
+      {/* Decorative Radial Gradients */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.15, 1],
+            opacity: [0.35, 0.5, 0.35],
           }}
           transition={{
-            duration: 8,
+            duration: 9,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute -left-40 top-20 size-96 rounded-full bg-gradient-to-r from-teal-400/30 to-cyan-400/30 blur-3xl"
+          className="absolute -left-32 top-10 size-[450px] rounded-full bg-[radial-gradient(circle,_rgba(16,185,129,0.18),_transparent_60%)] blur-3xl"
         />
         <motion.div
           animate={{
             scale: [1.1, 1, 1.1],
-            opacity: [0.3, 0.5, 0.3],
+            opacity: [0.25, 0.4, 0.25],
           }}
           transition={{
-            duration: 10,
+            duration: 11,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute -right-40 bottom-20 size-96 rounded-full bg-gradient-to-r from-cyan-400/30 to-teal-400/30 blur-3xl"
+          className="absolute -right-32 bottom-20 size-[500px] rounded-full bg-[radial-gradient(circle,_rgba(20,184,166,0.15),_transparent_60%)] blur-3xl"
         />
-        <motion.div
-          style={{ y: y1 }}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full bg-gradient-to-r from-teal-500/10 to-cyan-500/10 blur-3xl"
-        />
-        {/* Floating particles */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{
-              x: Math.random() * 1000,
-              y: Math.random() * 500,
-              opacity: 0,
-            }}
-            animate={{
-              y: [null, Math.random() * -50, null],
-              opacity: [0, 0.5, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-            className="absolute size-2 rounded-full bg-teal-400/50 blur-sm"
-            style={{
-              left: `${10 + Math.random() * 80}%`,
-              top: `${20 + Math.random() * 60}%`,
-            }}
-          />
-        ))}
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-4">
-        <div className="text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="inline-block rounded-full border border-teal-200/50 bg-white/40 px-4 py-2 text-sm font-medium text-teal-700 backdrop-blur-md dark:border-teal-800/50 dark:bg-slate-950/40 dark:text-teal-300">
-              🏥 #1 AI-Powered Medical Consultation Platform
-            </span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mt-6 text-4xl font-bold md:text-6xl lg:text-7xl"
-          >
-            <span className="bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
-              Your AI Voice Doctor
-            </span>
-            <span className="block text-lg font-medium text-teal-600 dark:text-teal-400 md:text-2xl">
-              — Instant Medical Consultations
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-teal-700 dark:text-teal-300"
-          >
-            Consult with an AI-powered voice doctor anytime. Describe your symptoms,
-            get diagnosed, and receive a detailed medical report with treatment
-            recommendations — all through natural conversation.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
-          >
-            <button className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 px-8 py-4 font-semibold text-white shadow-xl shadow-teal-500/25 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-500/40 hover:-translate-y-1">
-              <span className="relative z-10 flex items-center gap-2">
-                🎤 Start Consultation
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          
+          {/* Hero Left Content */}
+          <div className="lg:col-span-7 text-center lg:text-left space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-extrabold text-emerald-800 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-300 shadow-sm">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                Next-Gen Clinical Consultation Platform
               </span>
-              {/* Shimmer effect */}
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-br from-white/30 via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-              {/* Animated gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-teal-300 via-cyan-300 to-teal-200 opacity-0 transition-opacity duration-300 group-hover:opacity-20" />
-            </button>
-            <button className="group relative overflow-hidden rounded-xl border border-white/40 bg-white/30 px-8 py-4 font-semibold text-teal-700 backdrop-blur-md transition-all duration-300 hover:bg-white/50 hover:shadow-lg dark:border-teal-700/30 dark:bg-slate-900/30 dark:text-teal-300 dark:hover:bg-slate-800/50">
-              <span className="relative z-10">📄 View Sample Report</span>
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-br from-teal-500/20 via-cyan-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            </button>
-          </motion.div>
+            </motion.div>
 
-          {/* Stats - Glassmorphism cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-16 flex flex-wrap items-center justify-center gap-4 md:gap-8"
-          >
-            {[
-              { number: "500K+", label: "Consultations", color: "from-teal-500 via-cyan-500 to-teal-400" },
-              { number: "98%", label: "Accuracy Rate", color: "from-cyan-500 via-teal-500 to-cyan-400" },
-              { number: "24/7", label: "Available", color: "from-teal-400 via-cyan-400 to-teal-300" },
-            ].map((stat, index) => (
-              <div key={stat.label} className="group relative rounded-2xl border border-white/20 bg-white/40 p-6 backdrop-blur-md transition-all duration-300 hover:bg-white/60 hover:shadow-xl dark:border-teal-800/30 dark:bg-slate-950/40 dark:hover:bg-slate-900/60">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-10" />
-                <div className={`text-3xl font-bold bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`}>
-                  {stat.number}
-                </div>
-                <div className="text-sm text-teal-600 dark:text-teal-400">{stat.label}</div>
-              </div>
-            ))}
-          </motion.div>
-
-          {/* Demo Preview - Glassmorphism */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="relative mx-auto mt-16 max-w-4xl"
-          >
-            <div className="relative rounded-3xl border border-white/30 bg-white/20 p-2 shadow-2xl backdrop-blur-xl dark:border-teal-800/30 dark:bg-slate-950/20">
-              <div className="overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-white/60 to-teal-50/60 dark:border-teal-800/30 dark:from-slate-950/60 dark:to-teal-950/60">
-                <div className="flex aspect-video items-center justify-center">
-                  <div className="text-center">
-                    <div className="mx-auto mb-4 flex size-24 items-center justify-center rounded-2xl bg-gradient-to-r from-teal-500/20 to-cyan-500/20 backdrop-blur-md">
-                      <span className="text-5xl">🤖</span>
-                    </div>
-                    <p className="text-xl font-semibold bg-gradient-to-r from-teal-700 to-cyan-600 bg-clip-text text-transparent dark:from-teal-300 dark:to-cyan-200">
-                      AI Doctor is listening...
-                    </p>
-                    <p className="mt-2 text-sm text-teal-600 dark:text-teal-400">
-                      Click to start your consultation
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Floating elements - Glassmorphism */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="absolute -left-8 top-1/4 rounded-2xl border border-white/30 bg-white/40 p-4 backdrop-blur-md shadow-lg dark:border-teal-800/30 dark:bg-slate-950/40"
+            <motion.h1
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.08 }}
+              className="text-4xl sm:text-5xl lg:text-6.5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.1]"
             >
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center text-white">
-                  <span>✓</span>
+              Consult with our <br />
+              <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-500 bg-clip-text text-transparent dark:from-emerald-450 dark:via-teal-405 dark:to-emerald-350">
+                AI Voice Clinician
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.16 }}
+              className="mx-auto lg:mx-0 max-w-xl text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed"
+            >
+              Transform your patient care intake workflow. Speak naturally to dictate patient symptoms and instantly compile comprehensive diagnostic reports with actionable clinical suggestions.
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.24 }}
+              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
+            >
+              <Link 
+                href="/dashboard" 
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 px-8 py-3.5 text-sm font-bold text-white shadow-md shadow-emerald-500/10 hover:shadow-lg transition active:scale-[0.98]"
+              >
+                <Mic className="h-4.5 w-4.5" />
+                Start Voice Consultation
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a 
+                href="#how-it-works"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg border border-slate-205 bg-white/40 hover:bg-slate-100/50 px-8 py-3.5 text-sm font-bold text-slate-700 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-350 dark:hover:text-white transition active:scale-[0.98]"
+              >
+                <FileCheck className="h-4.5 w-4.5 text-slate-450" />
+                How It Works
+              </a>
+            </motion.div>
+
+            {/* Micro Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.32 }}
+              className="pt-6 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-slate-500"
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-450">
+                  <Check className="h-3 w-3 stroke-[3]" />
                 </div>
-                <div>
-                  <p className="text-xs text-teal-600 dark:text-teal-400">Diagnosis Complete</p>
-                  <p className="text-sm font-semibold bg-gradient-to-r from-teal-600 to-cyan-500 bg-clip-text text-transparent">98% Confidence</p>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">98% Transcription Accuracy</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-450">
+                  <Check className="h-3 w-3 stroke-[3]" />
+                </div>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">HIPAA Protected Records</span>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Hero Right: 3D Console Graphic */}
+          <div className="lg:col-span-5 relative w-full flex justify-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="relative w-full max-w-[420px] rounded-xl border border-slate-205 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+            >
+              {/* Graphic Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-850 mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Intake Session Active</span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  Level 2
+                </span>
+              </div>
+
+              {/* Pulsing Central Mic Ring */}
+              <div className="flex flex-col items-center justify-center py-10 relative">
+                <motion.div 
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                  className="absolute h-24 w-24 rounded-full bg-emerald-500/20 border border-emerald-500/35"
+                />
+                <motion.div 
+                  animate={{ scale: [1, 1.6, 1], opacity: [0.3, 0, 0.3] }}
+                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                  className="absolute h-28 w-28 rounded-full bg-emerald-500/10 border border-emerald-500/20"
+                />
+
+                <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-500/20">
+                  <Mic className="h-6 w-6" />
+                </div>
+                
+                <span className="text-xs font-extrabold text-slate-850 dark:text-slate-200 mt-6 tracking-wide">
+                  Listening to Patient Vitals...
+                </span>
+
+                {/* Animated waves */}
+                <div className="flex items-center gap-1.5 h-6 mt-4">
+                  {[0.85, 1.25, 0.95, 1.15, 1.05, 1.1].map((waveDuration, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ height: [8, 24, 8] }}
+                      transition={{ 
+                        repeat: Infinity, 
+                        duration: waveDuration, 
+                        delay: i * 0.1,
+                        ease: "easeInOut"
+                      }}
+                      className="w-1.5 rounded-full bg-gradient-to-t from-emerald-600 to-teal-400"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Patient report card snippet mock */}
+              <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Live Diagnostic Structuring</span>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-450 flex items-center gap-0.5">
+                    <Activity className="h-3 w-3" />
+                    94% confidence
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-350 italic">
+                  &quot;...Complaining of chest pressure for 2 hours, pain index is 7 out of 10, minor dizziness...&quot;
+                </p>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-500 font-bold">Suggested: Cardiologist referral</span>
+                  <span className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">Urgent Care</span>
                 </div>
               </div>
             </motion.div>
 
+            {/* Floating Tag 1 */}
             <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 4, repeat: Infinity }}
-              className="absolute -right-8 bottom-1/4 rounded-2xl border border-white/30 bg-white/40 p-4 backdrop-blur-md shadow-lg dark:border-teal-800/30 dark:bg-slate-950/40"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute left-[-20px] top-1/4 rounded-lg border border-slate-205 bg-white p-3.5 shadow-md dark:border-slate-800 dark:bg-slate-900 hidden sm:flex items-center gap-2.5"
             >
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 flex items-center justify-center text-white">
-                  <span>📋</span>
-                </div>
-                <div>
-                  <p className="text-xs text-teal-600 dark:text-teal-400">Report Generated</p>
-                  <p className="text-sm font-semibold bg-gradient-to-r from-teal-600 to-cyan-500 bg-clip-text text-transparent">View Details</p>
-                </div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+                <Brain className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase">Decision Support</p>
+                <p className="text-xs font-bold text-slate-850 dark:text-white">Active clinical guidelines</p>
               </div>
             </motion.div>
-          </motion.div>
+
+            {/* Floating Tag 2 */}
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute right-[-20px] bottom-1/4 rounded-lg border border-slate-205 bg-white p-3.5 shadow-md dark:border-slate-800 dark:bg-slate-900 hidden sm:flex items-center gap-2.5"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10 text-teal-650">
+                <FileCheck className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase">EHR Export</p>
+                <p className="text-xs font-bold text-slate-850 dark:text-white">Structured PDF ready</p>
+              </div>
+            </motion.div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -353,57 +384,47 @@ function Hero() {
 
 function Features() {
   return (
-    <section id="features" className="py-20">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="text-center">
-          <span className="inline-block rounded-full border border-teal-200/50 bg-white/40 px-4 py-2 text-sm font-medium text-teal-700 backdrop-blur-md dark:border-teal-800/50 dark:bg-slate-950/40 dark:text-teal-300">
-            ✨ Features
+    <section id="features" className="py-20 bg-white dark:bg-slate-950">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider">
+            ✨ Platform Highlights
           </span>
-          <h2 className="mt-4 text-3xl font-bold md:text-4xl">
-            <span className="bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
-              Everything You Need for Better Health
-            </span>
+          <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Everything You Need for Accurate Clinical Intake
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-teal-600 dark:text-teal-400">
-            Our AI-powered platform combines cutting-edge technology with medical
-            expertise to provide you with the best possible care.
+          <p className="text-sm sm:text-base text-slate-500 mt-2">
+            Combining advanced speech recognition models with localized healthcare intelligence to deliver highly optimized assessments.
           </p>
         </div>
 
-        <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.3 }}
-              viewport={{ once: true }}
-              className="group relative cursor-pointer rounded-2xl border border-white/30 bg-white/40 p-8 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl dark:border-teal-800/30 dark:bg-slate-950/40"
-            >
-              {/* Hover gradient overlay */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
               <motion.div
-                initial={{ opacity: 0 }}
-                whileHover={{ opacity: 1 }}
-                className="absolute inset-0 rounded-2xl bg-gradient-to-r from-teal-500/5 via-cyan-500/5 to-teal-500/5"
-              />
-              {/* Icon animation */}
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-                className="relative mb-4 inline-flex size-12 items-center justify-center rounded-xl bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-2xl backdrop-blur-md"
+                key={feature.title}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                className="group relative rounded-xl border border-slate-205 bg-white p-6 dark:border-slate-800 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 hover:shadow-md transition-all duration-300"
               >
-                {feature.icon}
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-750 dark:text-emerald-450 mb-4 group-hover:scale-105 transition-transform">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-850 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                  {feature.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                  {feature.description}
+                </p>
               </motion.div>
-              <h3 className="relative text-xl font-semibold bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
-                {feature.title}
-              </h3>
-              <p className="relative mt-3 text-teal-600 dark:text-teal-400">
-                {feature.description}
-              </p>
-            </motion.div>
-          ))}
+            );
+          })}
         </div>
+
       </div>
     </section>
   );
@@ -411,62 +432,47 @@ function Features() {
 
 function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-20">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="text-center">
-          <span className="inline-block rounded-full border border-teal-200/50 bg-white/40 px-4 py-2 text-sm font-medium text-teal-700 backdrop-blur-md dark:border-teal-800/50 dark:bg-slate-950/40 dark:text-teal-300">
-            🔄 How It Works
+    <section id="how-it-works" className="py-20 bg-slate-50 dark:bg-slate-900/30">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider">
+            🔄 Simple Workflow
           </span>
-          <h2 className="mt-4 text-3xl font-bold md:text-4xl">
-            <span className="bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
-              Three Simple Steps to Better Health
-            </span>
+          <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Three Steps to Assessment Success
           </h2>
+          <p className="text-sm sm:text-base text-slate-500 mt-2">
+            Engineered to remove charting workload, so clinicians can prioritize patient outcomes.
+          </p>
         </div>
 
-        <div className="mt-16 grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-3 relative">
+          {/* Connector line for desktop */}
+          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 -translate-y-1/2 hidden md:block z-0" />
+
           {steps.map((step, index) => (
             <motion.div
               key={step.step}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.3 }}
               viewport={{ once: true }}
-              className="group relative cursor-pointer rounded-2xl border border-white/30 bg-white/40 p-8 backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:bg-white/60 dark:border-teal-800/30 dark:bg-slate-950/40 dark:hover:bg-slate-900/60"
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              className="group relative z-10 rounded-xl border border-slate-205 bg-white p-6 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-slate-350 dark:hover:border-slate-800 transition-all duration-300"
             >
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                className="mb-4 text-6xl font-bold bg-gradient-to-br from-teal-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent"
-              >
+              <div className="mb-4 text-4xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-400 bg-clip-text text-transparent">
                 {step.step}
-              </motion.div>
-              <h3 className="text-xl font-semibold bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
+              </div>
+              <h3 className="text-base font-bold text-slate-850 dark:text-slate-100">
                 {step.title}
               </h3>
-              <p className="mt-3 text-teal-600 dark:text-teal-400">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
                 {step.description}
               </p>
-
-              {index < steps.length - 1 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  className="absolute -right-4 top-1/2 hidden -translate-y-1/2 md:block"
-                >
-                  <motion.div
-                    whileHover={{ x: 5 }}
-                    className="flex size-10 items-center justify-center rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 shadow-lg shadow-teal-500/25"
-                  >
-                    <svg className="size-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </motion.div>
-                </motion.div>
-              )}
             </motion.div>
           ))}
         </div>
+
       </div>
     </section>
   );
@@ -474,69 +480,52 @@ function HowItWorks() {
 
 function Testimonials() {
   return (
-    <section className="py-20">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="text-center">
-          <span className="inline-block rounded-full border border-teal-200/50 bg-white/40 px-4 py-2 text-sm font-medium text-teal-700 backdrop-blur-md dark:border-teal-800/50 dark:bg-slate-950/40 dark:text-teal-300">
-            💬 Testimonials
+    <section className="py-20 bg-white dark:bg-slate-950">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider">
+            💬 Clinical Praise
           </span>
-          <h2 className="mt-4 text-3xl font-bold md:text-4xl">
-            <span className="bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
-              Trusted by Thousands
-            </span>
+          <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Trusted by Practitioners Globally
           </h2>
         </div>
 
-        <div className="mt-16 grid gap-8 md:grid-cols-3">
-          {testimonials.map((testimonial, index) => (
+        <div className="grid gap-6 md:grid-cols-3">
+          {testimonials.map((t, index) => (
             <motion.div
-              key={testimonial.name}
-              initial={{ opacity: 0, y: 20 }}
+              key={t.name}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.3 }}
               viewport={{ once: true }}
-              className="group cursor-pointer rounded-2xl border border-white/30 bg-white/40 p-8 shadow-lg backdrop-blur-md transition-all duration-300 hover:bg-white/60 hover:shadow-xl dark:border-teal-800/30 dark:bg-slate-950/40 dark:hover:bg-slate-900/60"
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              className="rounded-xl border border-slate-205 bg-slate-50 p-6 dark:border-slate-800 shadow-sm flex flex-col justify-between"
             >
-              <div className="flex gap-1">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, scale: 0 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 + i * 0.1 }}
-                    className="text-yellow-400"
-                  >
-                    ★
-                  </motion.span>
-                ))}
+              <div>
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(t.rating)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-yellow-450 text-yellow-450" />
+                  ))}
+                </div>
+                <p className="text-xs sm:text-sm text-slate-655 dark:text-slate-350 italic leading-relaxed">
+                  &quot;{t.content}&quot;
+                </p>
               </div>
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                className="mt-4 text-teal-600 dark:text-teal-400"
-              >
-                "{testimonial.content}"
-              </motion.p>
-              <div className="mt-6 flex items-center gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  className="size-10 rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 flex items-center justify-center text-lg font-bold text-white"
-                >
-                  {testimonial.name[0]}
-                </motion.div>
+
+              <div className="mt-6 flex items-center gap-3 pt-4 border-t border-slate-200/50 dark:border-slate-850">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-bold text-xs">
+                  {t.name.charAt(4)}
+                </div>
                 <div>
-                  <p className="font-semibold bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
-                    {testimonial.name}
-                  </p>
-                  <p className="text-sm text-teal-500 dark:text-teal-500">
-                    {testimonial.role}
-                  </p>
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">{t.name}</h4>
+                  <p className="text-[10px] text-slate-500">{t.role}</p>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
+
       </div>
     </section>
   );
@@ -544,78 +533,77 @@ function Testimonials() {
 
 function Pricing() {
   return (
-    <section id="pricing" className="py-20">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="text-center">
-          <span className="inline-block rounded-full border border-teal-200/50 bg-white/40 px-4 py-2 text-sm font-medium text-teal-700 backdrop-blur-md dark:border-teal-800/50 dark:bg-slate-950/40 dark:text-teal-300">
-            💰 Pricing
+    <section id="pricing" className="py-20 bg-slate-50 dark:bg-slate-900/30">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider">
+            💰 Simple Billing
           </span>
-          <h2 className="mt-4 text-3xl font-bold md:text-4xl">
-            <span className="bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
-              Simple, Transparent Pricing
-            </span>
+          <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Pay-As-You-Go Credit Pricing
           </h2>
+          <p className="text-sm text-slate-500 mt-2">
+            No recurring contracts, no monthly setup fees. Buy consultation credits only when you need them.
+          </p>
         </div>
 
-        <div className="mt-16 grid gap-8 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3">
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              transition={{ duration: 0.3 }}
               viewport={{ once: true }}
-              className={`relative cursor-pointer rounded-2xl border p-8 backdrop-blur-md transition-all duration-300 hover:shadow-2xl ${plan.popular
-                ? "border-teal-500/50 bg-gradient-to-br from-teal-500/20 via-cyan-500/20 to-teal-500/20 shadow-xl shadow-teal-500/10 dark:border-teal-400/50 dark:from-teal-500/10 dark:via-cyan-500/10 dark:to-teal-500/10"
-                : "border-white/30 bg-white/40 shadow-lg hover:shadow-xl dark:border-teal-800/30 dark:bg-slate-950/40"
-                }`}
+              transition={{ duration: 0.4, delay: index * 0.08 }}
+              className={`relative rounded-xl border bg-white p-6 shadow-sm dark:bg-slate-900 flex flex-col justify-between transition-all duration-350 ${
+                plan.popular 
+                  ? "border-emerald-500 dark:border-emerald-600 ring-2 ring-emerald-500/20 scale-[1.02] md:translate-y-[-4px]" 
+                  : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+              }`}
             >
               {plan.popular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 px-4 py-1 text-xs font-bold text-white shadow-lg">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-950 dark:bg-white dark:text-slate-950 text-white text-[10px] font-bold px-3 py-1 shadow-sm">
                   Most Popular
                 </span>
               )}
 
-              <h3 className={`text-xl font-semibold ${plan.popular ? "bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent" : "text-teal-900 dark:text-teal-100"}`}>
-                {plan.name}
-              </h3>
+              <div>
+                <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 mb-4">{plan.name}</h3>
 
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className={`text-4xl font-bold ${plan.popular ? "bg-gradient-to-br from-teal-600 via-cyan-500 to-teal-400 bg-clip-text text-transparent" : "text-teal-900 dark:text-teal-50"}`}>
-                  {plan.price}
-                </span>
-                {plan.period && (
-                  <span className={plan.popular ? "text-teal-600" : "text-teal-500 dark:text-teal-400"}>
-                    {plan.period}
-                  </span>
-                )}
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{plan.price}</span>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">One-time</span>
+                </div>
+
+                <p className="text-xs text-slate-500 mb-6">{plan.description}</p>
+
+                <hr className="border-slate-100 dark:border-slate-850 mb-6" />
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, fIdx) => (
+                    <li key={fIdx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-350">
+                      <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-450 shrink-0 mt-0.5" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
-              <p className={`mt-2 ${plan.popular ? "text-teal-600" : "text-teal-500 dark:text-teal-400"}`}>
-                {plan.description}
-              </p>
-
-              <ul className="mt-6 space-y-3">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <span className={plan.popular ? "text-teal-500" : "text-teal-500"}>✓</span>
-                    <span className={plan.popular ? "text-teal-700" : "text-teal-600 dark:text-teal-400"}>
-                      {feature}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                className={`group relative mt-8 w-full overflow-hidden rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 py-3 font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25`}
+              <Link
+                href="/dashboard"
+                className={`w-full py-3 rounded-lg text-xs sm:text-sm font-bold text-center transition-all shadow-sm block ${
+                  plan.popular 
+                    ? "bg-emerald-700 hover:bg-emerald-800 text-white" 
+                    : "bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-white border border-slate-200/80 dark:border-slate-750"
+                }`}
               >
-                <span className="relative z-10">{plan.cta}</span>
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-br from-white/20 via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-              </button>
+                {plan.cta}
+              </Link>
             </motion.div>
           ))}
         </div>
+
       </div>
     </section>
   );
@@ -623,48 +611,38 @@ function Pricing() {
 
 function CTA() {
   return (
-    <section className="py-20">
-      <div className="mx-auto max-w-4xl px-4">
+    <section className="py-20 bg-white dark:bg-slate-950">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="relative overflow-hidden rounded-3xl border border-white/30 bg-gradient-to-br from-teal-500/20 via-cyan-500/20 to-teal-500/20 p-12 text-center backdrop-blur-xl shadow-2xl"
+          transition={{ duration: 0.5 }}
+          className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-955 via-teal-900 to-emerald-955 p-8 sm:p-12 text-center text-white shadow-xl border border-emerald-800/40"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-cyan-500/10" />
-          <div className="absolute -left-20 -top-20 size-64 rounded-full bg-gradient-to-r from-teal-500/30 to-cyan-500/30 blur-3xl" />
-          <div className="absolute -bottom-20 -right-20 size-64 rounded-full bg-gradient-to-r from-cyan-500/30 to-teal-500/30 blur-3xl" />
-
-          <div className="relative z-10">
-            <h2 className="text-3xl font-bold md:text-4xl">
-              <span className="bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">
-                Ready to Transform Your Healthcare Experience?
-              </span>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_transparent_40%)] pointer-events-none" />
+          
+          <div className="relative z-10 space-y-6">
+            <h2 className="text-2xl sm:text-3.5xl font-extrabold tracking-tight">
+              Ready to Upgrade Patient Sorting?
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-teal-600 dark:text-teal-400">
-              Join thousands of users who have already improved their health with VoiceMed AI.
+            <p className="text-xs sm:text-sm text-emerald-200/90 max-w-xl mx-auto leading-relaxed">
+              Join thousands of clinical workers optimizing patient queues and drafting structured reports using VoiceMed AI.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 px-8 py-4 font-semibold text-white shadow-xl shadow-teal-500/25 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-500/40"
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link 
+                href="/dashboard"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 px-8 py-3.5 text-xs sm:text-sm font-bold text-emerald-950 transition active:scale-[0.98] shadow-md shadow-emerald-500/10"
               >
-                <span className="relative z-10">Start Free Consultation</span>
-                {/* Shimmer effect */}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-br from-white/30 via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                {/* Animated gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-300 via-cyan-300 to-teal-200 opacity-0 transition-opacity duration-300 group-hover:opacity-20" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden rounded-xl border border-white/40 bg-white/20 px-8 py-4 font-semibold text-teal-700 backdrop-blur-md transition-all duration-300 hover:bg-white/40 dark:border-teal-700/30 dark:bg-slate-900/20 dark:text-teal-300"
+                Start Free Consultation
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link 
+                href="/sign-up"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 hover:bg-white/10 px-8 py-3.5 text-xs sm:text-sm font-bold text-white transition active:scale-[0.98]"
               >
-                <span className="relative z-10">Learn More</span>
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-br from-teal-500/20 via-cyan-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-              </motion.button>
+                Sign Up Account
+              </Link>
             </div>
           </div>
         </motion.div>
@@ -675,59 +653,61 @@ function CTA() {
 
 function Footer() {
   return (
-    <footer id="about" className="border-t border-white/20 bg-white/40 py-12 backdrop-blur-md dark:border-teal-800/30 dark:bg-slate-950/40">
-      <div className="mx-auto max-w-7xl px-4">
+    <footer id="about" className="border-t border-slate-200/80 bg-slate-50 py-16 dark:border-slate-850 dark:bg-slate-950 transition-colors">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 md:grid-cols-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-teal-400 shadow-lg shadow-teal-500/25">
-                <span className="text-xl">⚕️</span>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 shadow shadow-emerald-500/10">
+                <Stethoscope className="h-4.5 w-4.5 text-white" />
               </div>
-              <h1 className="text-xl font-bold bg-gradient-to-br from-teal-600 via-cyan-500 to-teal-400 bg-clip-text text-transparent">
+              <h3 className="text-base font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent dark:from-white dark:to-slate-200">
                 VoiceMed AI
-              </h1>
+              </h3>
             </div>
-            <p className="mt-4 text-teal-600 dark:text-teal-400">
-              Your trusted AI-powered voice doctor for instant medical consultations.
+            <p className="text-xs text-slate-500 leading-relaxed max-w-xs">
+              Secure, HIPAA-compliant patient voice intake and structured EHR diagnostic report generators built for clinics.
             </p>
           </div>
 
           <div>
-            <h3 className="font-semibold bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">Product</h3>
-            <ul className="mt-4 space-y-2">
-              <li><a href="#features" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">Features</a></li>
-              <li><a href="#pricing" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">Pricing</a></li>
-              <li><a href="#" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">Security</a></li>
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">Product</h4>
+            <ul className="mt-4 space-y-2.5">
+              <li><a href="#features" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">Features</a></li>
+              <li><a href="#pricing" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">Pricing</a></li>
+              <li><a href="#how-it-works" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">Outcome Workflow</a></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="font-semibold bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">Company</h3>
-            <ul className="mt-4 space-y-2">
-              <li><a href="#" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">About</a></li>
-              <li><a href="#" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">Blog</a></li>
-              <li><a href="#" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">Careers</a></li>
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">Resources</h4>
+            <ul className="mt-4 space-y-2.5">
+              <li><a href="#" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">Developer Portal</a></li>
+              <li><a href="#" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">Clinical Guidelines</a></li>
+              <li><a href="#" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">EHR Integrations</a></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="font-semibold bg-gradient-to-br from-teal-700 via-cyan-600 to-teal-400 bg-clip-text text-transparent">Legal</h3>
-            <ul className="mt-4 space-y-2">
-              <li><a href="#" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">Privacy Policy</a></li>
-              <li><a href="#" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">Terms of Service</a></li>
-              <li><a href="#" className="text-teal-600 transition-colors hover:bg-gradient-to-br hover:bg-clip-text hover:text-transparent hover:from-teal-600 hover:via-cyan-500 hover:to-teal-400 dark:text-teal-400 dark:hover:text-teal-200">HIPAA Compliance</a></li>
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">Compliance</h4>
+            <ul className="mt-4 space-y-2.5">
+              <li><a href="#" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">HIPAA Standards</a></li>
+              <li><a href="#" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">Terms of Service</a></li>
+              <li><a href="#" className="text-xs text-slate-550 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-450 transition-colors">Privacy Policy</a></li>
             </ul>
           </div>
+
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/20 pt-8 md:flex-row dark:border-teal-800/30">
-          <p className="text-sm text-teal-500 dark:text-teal-400">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200/50 pt-8 md:flex-row dark:border-slate-850">
+          <p className="text-[11px] text-slate-500">
             © 2026 VoiceMed AI. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <a href="#" className="text-teal-500 transition-colors hover:text-teal-700 dark:hover:text-teal-300">Twitter</a>
-            <a href="#" className="text-teal-500 transition-colors hover:text-teal-700 dark:hover:text-teal-300">LinkedIn</a>
-            <a href="#" className="text-teal-500 transition-colors hover:text-teal-700 dark:hover:text-teal-300">GitHub</a>
+          <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+            <a href="#" className="hover:text-emerald-750 dark:hover:text-emerald-400 transition-colors">Twitter</a>
+            <a href="#" className="hover:text-emerald-750 dark:hover:text-emerald-400 transition-colors">LinkedIn</a>
+            <a href="#" className="hover:text-emerald-750 dark:hover:text-emerald-400 transition-colors">GitHub</a>
           </div>
         </div>
       </div>

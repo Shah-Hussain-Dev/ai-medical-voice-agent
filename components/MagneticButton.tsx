@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, useMotionValue, useTransform } from "motion/react";
-import { useMemo } from "react";
 
 interface MagneticButtonProps {
   label: string;

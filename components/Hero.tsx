@@ -2,10 +2,18 @@
 
 import { motion, useScroll, useTransform } from "motion/react";
 
+const STATIC_PARTICLES = [
+  { x: 120, y: 350, animateY: -40, duration: 4.2, delay: 0.5, left: 15, top: 25 },
+  { x: 540, y: 150, animateY: -30, duration: 3.8, delay: 1.2, left: 45, top: 65 },
+  { x: 820, y: 420, animateY: -45, duration: 4.5, delay: 0.1, left: 75, top: 35 },
+  { x: 230, y: 180, animateY: -25, duration: 3.5, delay: 0.8, left: 28, top: 50 },
+  { x: 680, y: 290, animateY: -35, duration: 4.8, delay: 1.5, left: 60, top: 75 },
+  { x: 410, y: 310, animateY: -50, duration: 4.0, delay: 0.3, left: 38, top: 30 }
+];
+
 export default function Hero() {
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 500], [0, 150]);
-  const y2 = useTransform(scrollY, [0, 500], [0, -100]);
 
   return (
     <section className="relative pt-32 pb-20 overflow-hidden">
@@ -40,27 +48,27 @@ export default function Hero() {
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full bg-gradient-to-r from-teal-500/10 to-cyan-500/10 blur-3xl"
         />
         {/* Floating particles */}
-        {[...Array(6)].map((_, i) => (
+        {STATIC_PARTICLES.map((particle, i) => (
           <motion.div
             key={i}
             initial={{
-              x: Math.random() * 1000,
-              y: Math.random() * 500,
+              x: particle.x,
+              y: particle.y,
               opacity: 0,
             }}
             animate={{
-              y: [null, Math.random() * -50, null],
+              y: [null, particle.animateY, null],
               opacity: [0, 0.5, 0],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: particle.duration,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: particle.delay,
             }}
             className="absolute size-2 rounded-full bg-teal-400/50 blur-sm"
             style={{
-              left: `${10 + Math.random() * 80}%`,
-              top: `${20 + Math.random() * 60}%`,
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
             }}
           />
         ))}
@@ -135,9 +143,9 @@ export default function Hero() {
               { number: "500K+", label: "Consultations", color: "from-teal-500 via-cyan-500 to-teal-400" },
               { number: "98%", label: "Accuracy Rate", color: "from-cyan-500 via-teal-500 to-cyan-400" },
               { number: "24/7", label: "Available", color: "from-teal-400 via-cyan-400 to-teal-300" },
-            ].map((stat, index) => (
-              <div key={stat.label} className="group relative rounded-2xl border border-white/20 bg-white/40 p-6 backdrop-blur-md transition-all duration-300 hover:bg-white/60 hover:shadow-xl dark:border-teal-800/30 dark:bg-slate-950/40 dark:hover:bg-slate-900/60">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-10" />
+            ].map((stat) => (
+              <div key={stat.label} className="group relative rounded-xl border border-white/20 bg-white/40 p-6 backdrop-blur-md transition-all duration-300 hover:bg-white/60 hover:shadow-xl dark:border-teal-800/30 dark:bg-slate-950/40 dark:hover:bg-slate-900/60">
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-10" />
                 <div className={`text-3xl font-bold bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`}>
                   {stat.number}
                 </div>
@@ -153,11 +161,11 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="relative mx-auto mt-16 max-w-4xl"
           >
-            <div className="relative rounded-3xl border border-white/30 bg-white/20 p-2 shadow-2xl backdrop-blur-xl dark:border-teal-800/30 dark:bg-slate-950/20">
-              <div className="overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-white/60 to-teal-50/60 dark:border-teal-800/30 dark:from-slate-950/60 dark:to-teal-950/60">
+            <div className="relative rounded-xl border border-white/30 bg-white/20 p-2 shadow-2xl backdrop-blur-xl dark:border-teal-800/30 dark:bg-slate-950/20">
+              <div className="overflow-hidden rounded-lg border border-white/20 bg-gradient-to-br from-white/60 to-teal-50/60 dark:border-teal-800/30 dark:from-slate-950/60 dark:to-teal-950/60">
                 <div className="flex aspect-video items-center justify-center">
                   <div className="text-center">
-                    <div className="mx-auto mb-4 flex size-24 items-center justify-center rounded-2xl bg-gradient-to-r from-teal-500/20 to-cyan-500/20 backdrop-blur-md">
+                    <div className="mx-auto mb-4 flex size-24 items-center justify-center rounded-xl bg-gradient-to-r from-teal-500/20 to-cyan-500/20 backdrop-blur-md">
                       <span className="text-5xl">🤖</span>
                     </div>
                     <p className="text-xl font-semibold bg-gradient-to-r from-teal-700 to-cyan-600 bg-clip-text text-transparent dark:from-teal-300 dark:to-cyan-200">
@@ -175,7 +183,7 @@ export default function Hero() {
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity }}
-              className="absolute -left-8 top-1/4 rounded-2xl border border-white/30 bg-white/40 p-4 backdrop-blur-md shadow-lg dark:border-teal-800/30 dark:bg-slate-950/40"
+              className="absolute -left-8 top-1/4 rounded-xl border border-white/30 bg-white/40 p-4 backdrop-blur-md shadow-lg dark:border-teal-800/30 dark:bg-slate-950/40"
             >
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center text-white">
@@ -191,7 +199,7 @@ export default function Hero() {
             <motion.div
               animate={{ y: [0, 10, 0] }}
               transition={{ duration: 4, repeat: Infinity }}
-              className="absolute -right-8 bottom-1/4 rounded-2xl border border-white/30 bg-white/40 p-4 backdrop-blur-md shadow-lg dark:border-teal-800/30 dark:bg-slate-950/40"
+              className="absolute -right-8 bottom-1/4 rounded-xl border border-white/30 bg-white/40 p-4 backdrop-blur-md shadow-lg dark:border-teal-800/30 dark:bg-slate-950/40"
             >
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 flex items-center justify-center text-white">

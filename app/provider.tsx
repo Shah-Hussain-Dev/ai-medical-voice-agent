@@ -17,11 +17,6 @@ const Provider = ({ children }: { children: React.ReactNode }) => {
         credits: 0,
     });
     console.log("User Details:", userDetails);
-    useEffect(() => {
-        if (user) {
-            createUser();
-        }
-    }, [user])
     const createUser = async () => {
         try {
             const response = await axios.post('/api/users');
@@ -32,6 +27,14 @@ const Provider = ({ children }: { children: React.ReactNode }) => {
             console.error("Error creating user:", err);
         }
     }
+
+    useEffect(() => {
+        if (user) {
+            setTimeout(() => {
+                createUser();
+            }, 0);
+        }
+    }, [user])
     return (
         <div>
             <UserDetailsContext.Provider value={userDetails}>

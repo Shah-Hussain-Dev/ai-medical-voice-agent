@@ -20,7 +20,7 @@ const ibmMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "VoiceMed AI",
-  description: "Clinical AI triage and medical reporting built for modern care workflows.",
+  description: "Clinical AI consultation and medical reporting built for modern care workflows.",
 };
 
 export default function RootLayout({
@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider afterSignOutUrl="/">
       <html lang="en" className={`${sourceSans.variable} ${ibmMono.variable} h-full antialiased`}>
         <body className="min-h-full font-sans bg-slate-50 text-slate-950">
           <Provider>{children}</Provider>

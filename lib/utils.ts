@@ -4,3 +4,8 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+
+export const AI_DOCTOR_SUGGESTION_MODEL= {
+  llama:"nvidia/nemotron-nano-12b-v2-vl:free"
+}
