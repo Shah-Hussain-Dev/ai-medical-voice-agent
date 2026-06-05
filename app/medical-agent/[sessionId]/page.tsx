@@ -16,9 +16,12 @@ import {
   Activity,
   MessageSquare,
   User,
-  Info
+  Info,
+  Sun,
+  Moon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import axios from "axios";
 
 // Script generator based on selected doctor specialist and symptoms
 const getConversationScript = (patientName: string, doctorSpecialty: string, symptoms: string, severity: string) => [
@@ -68,6 +71,27 @@ export default function TelehealthRoom() {
   const params = useParams();
   const sessionId = params.sessionId as string;
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Initialize theme based on document class or local storage
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains("dark") || 
+                   document.body.classList.contains("dark");
+    setIsDarkMode(isDark);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextDark = !isDarkMode;
+    setIsDarkMode(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add("dark");
+      document.body.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.body.classList.remove("dark");
+    }
+  };
+
   // Local state for active session data
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -78,6 +102,7 @@ export default function TelehealthRoom() {
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
+  const [isCallStarted, setIsCallStarted] = useState(false);
 
   // Chat/Transcription states
   const [messages, setMessages] = useState<Message[]>([]);
@@ -85,40 +110,83 @@ export default function TelehealthRoom() {
   const [isDoctorSpeaking, setIsDoctorSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const getSessionDetails = async () => {
+    try {
+      const response = await axios.get(`/api/create-session?sessionId=${sessionId}`);
+      const sessionRecord = response.data?.data;
+      if (sessionRecord) {
+        let parsedNotes: any = null;
+        try {
+          parsedNotes = typeof sessionRecord.notes === "string" ? JSON.parse(sessionRecord.notes) : sessionRecord.notes;
+        } catch (e) {
+          console.error("Failed to parse session notes:", e);
+        }
+
+        if (parsedNotes && typeof parsedNotes === "object") {
+          setSessionData({
+            patientName: parsedNotes.patientName || "Patient Intake",
+            patientAge: parsedNotes.patientAge || "30",
+            patientGender: parsedNotes.patientGender || "Male",
+            symptoms: parsedNotes.symptoms || "Unspecified symptoms",
+            severity: parsedNotes.severity || "Moderate",
+            doctorSpecialty: parsedNotes.doctorSpecialty || (sessionRecord.selectedDoctor?.specialist || "General Physician"),
+            doctorVoice: parsedNotes.doctorVoice || (sessionRecord.selectedDoctor?.voiceId || "will"),
+            doctorImage: parsedNotes.doctorImage || (sessionRecord.selectedDoctor?.image || "/images/doctor1.png"),
+          });
+        } else {
+          setSessionData({
+            patientName: "Patient Intake",
+            patientAge: "30",
+            patientGender: "Male",
+            symptoms: sessionRecord.notes || "Unspecified symptoms",
+            severity: "Moderate",
+            doctorSpecialty: sessionRecord.selectedDoctor?.specialist || "General Physician",
+            doctorVoice: sessionRecord.selectedDoctor?.voiceId || "will",
+            doctorImage: sessionRecord.selectedDoctor?.image || "/images/doctor1.png",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching session details:", error);
+    }
+  };
+
   // Load session data
   useEffect(() => {
-    setTimeout(() => {
-      setIsClient(true);
-      const stored = localStorage.getItem("current_active_session");
-      if (stored) {
-        setSessionData(JSON.parse(stored));
-      } else {
-        // Fallback if accessed directly
-        setSessionData({
-          patientName: "Patient Intake",
-          patientAge: "30",
-          patientGender: "Male",
-          symptoms: "Unspecified symptoms",
-          severity: "Moderate",
-          doctorSpecialty: "General Physician",
-          doctorVoice: "will",
-          doctorImage: "/images/doctor1.png"
-        });
-      }
-    }, 0);
-  }, []);
+    setIsClient(true);
+    // 1. Try loading from localStorage first for instant rendering
+    const stored = localStorage.getItem("current_active_session");
+    if (stored) {
+      setSessionData(JSON.parse(stored));
+    } else {
+      // Fallback placeholder before database loads
+      setSessionData({
+        patientName: "Patient Intake",
+        patientAge: "30",
+        patientGender: "Male",
+        symptoms: "Unspecified symptoms",
+        severity: "Moderate",
+        doctorSpecialty: "General Physician",
+        doctorVoice: "will",
+        doctorImage: "/images/doctor1.png"
+      });
+    }
+    // 2. Fetch the database source of truth
+    getSessionDetails();
+  }, [sessionId]);
 
   // Call duration counter
   useEffect(() => {
+    if (!isCallStarted) return;
     const interval = setInterval(() => {
       setCallDuration(prev => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isCallStarted]);
 
   // Simulated transcription script playback
   useEffect(() => {
-    if (!sessionData) return;
+    if (!sessionData || !isCallStarted) return;
 
     const script = getConversationScript(
       sessionData.patientName,
@@ -206,7 +274,7 @@ export default function TelehealthRoom() {
       clearTimeout(t5);
       clearTimeout(t5_stop);
     };
-  }, [sessionData]);
+  }, [sessionData, isCallStarted]);
 
   // Scroll to bottom of chat transcript
   useEffect(() => {
@@ -318,7 +386,7 @@ export default function TelehealthRoom() {
 
   if (!isClient || !sessionData) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-900 dark:text-white">
         <Activity className="h-8 w-8 text-emerald-500 animate-spin" />
       </div>
     );
@@ -327,36 +395,169 @@ export default function TelehealthRoom() {
   const docShortSpecialist = sessionData.doctorSpecialty;
   const docShortName = `Dr. ${sessionData.doctorSpecialty.split(' ')[0]}`;
 
+  if (!isCallStarted) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans select-none overflow-hidden transition-colors duration-300">
+        {/* Telehealth Top bar */}
+        <header className="px-6 py-4.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3.5">
+            <button 
+              onClick={() => router.push("/dashboard")}
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="h-4.5 w-4.5" />
+            </button>
+            <div>
+              <h1 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                Telehealth Lobby
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-450 border border-emerald-500/20">
+                  READY TO JOIN
+                </span>
+              </h1>
+            </div>
+          </div>
+
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-850 transition-all cursor-pointer"
+            title="Toggle Theme"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </header>
+
+        {/* Lobby Body */}
+        <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row"
+          >
+            {/* Left Column: Doctor Info */}
+            <div className="p-8 md:w-5/12 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center text-center">
+              <div className="relative group mb-4">
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-emerald-500 to-indigo-500 opacity-60 blur-xs animate-pulse" />
+                <div className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-950 shadow-md">
+                  {!imageError[100] ? (
+                    <img 
+                      src={sessionData.doctorImage.startsWith('.') ? sessionData.doctorImage.substring(1) : sessionData.doctorImage} 
+                      alt={docShortName} 
+                      className="h-full w-full object-cover"
+                      onError={() => setImageError(prev => ({ ...prev, [100]: true }))}
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-450 font-bold text-3xl">
+                      {docShortName.charAt(4)}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
+                {docShortName}
+              </h2>
+              <p className="text-xs text-emerald-600 dark:text-emerald-450 font-bold mt-0.5">
+                {docShortSpecialist}
+              </p>
+              
+              <div className="mt-4 px-3.5 py-1.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl w-full text-left">
+                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Voice Profile</span>
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-350 capitalize">{sessionData.doctorVoice} Agent</span>
+              </div>
+            </div>
+
+            {/* Right Column: User Info & Start Call */}
+            <div className="p-8 md:w-7/12 flex flex-col justify-between space-y-6">
+              <div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                  Patient Intake Summary
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-0.5">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Identifier</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">{sessionData.patientName}</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Age & Gender</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{sessionData.patientAge} y/o • {sessionData.patientGender}</span>
+                  </div>
+                </div>
+
+                <div className="mb-4 space-y-0.5">
+                  <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Clinical Severity</span>
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                    sessionData.severity === "Critical" ? "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                      : sessionData.severity === "High" ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      : sessionData.severity === "Moderate" ? "border-teal-500/20 bg-teal-500/10 text-teal-650 dark:text-teal-400"
+                      : "border-slate-500/20 bg-slate-500/10 text-slate-600 dark:text-slate-400"
+                  }`}>
+                    {sessionData.severity}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">Reported Symptoms</span>
+                  <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed max-h-[120px] overflow-y-auto pr-1 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-100 dark:border-slate-850">
+                    {sessionData.symptoms}
+                  </p>
+                </div>
+              </div>
+
+              {/* Start Call Action */}
+              <button
+                onClick={() => setIsCallStarted(true)}
+                className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer shadow-md shadow-emerald-500/10"
+              >
+                <Activity className="h-4.5 w-4.5 animate-pulse" />
+                Start Consultation Session
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans select-none overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col font-sans select-none overflow-hidden transition-colors duration-300">
       
       {/* Telehealth Top bar */}
-      <header className="px-6 py-4.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
+      <header className="px-6 py-4.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3.5">
           <button 
             onClick={handleEndCall}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-500 hover:text-slate-950 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <ArrowLeft className="h-4.5 w-4.5" />
           </button>
           
           <div>
-            <h1 className="text-sm font-extrabold tracking-tight text-white flex items-center gap-2">
+            <h1 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
               Telehealth Consultation
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 animate-pulse">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-450 border border-emerald-500/20 animate-pulse">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-450" />
                 SECURE HIPAA LINK
               </span>
             </h1>
-            <p className="text-[10px] text-slate-500 tracking-wide mt-0.5">
-              Room ID: <span className="font-mono text-slate-400">{sessionId}</span>
+            <p className="text-[10px] text-slate-550 dark:text-slate-500 tracking-wide mt-0.5">
+              Room ID: <span className="font-mono text-slate-650 dark:text-slate-400">{sessionId}</span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-850 transition-all cursor-pointer mr-1"
+            title="Toggle Theme"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
           {/* Active Call Clock */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-350">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-700 dark:text-slate-350">
             <Clock className="h-3.5 w-3.5 text-slate-450 animate-pulse" />
             {formatTimer(callDuration)}
           </div>
@@ -369,7 +570,7 @@ export default function TelehealthRoom() {
         {/* Left side: Telehealth Camera Window */}
         <div className="lg:col-span-2 flex flex-col h-full gap-4 min-h-[350px]">
           
-          <div className="relative bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden flex-1 flex flex-col items-center justify-center p-6 shadow-inner relative">
+          <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex-1 flex flex-col items-center justify-center p-6 shadow-xs relative">
             
             {/* Pulsing visual connection effect */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(16,185,129,0.02),_transparent_60%)] pointer-events-none" />
@@ -380,7 +581,7 @@ export default function TelehealthRoom() {
               {/* Doctor Avatar */}
               <div className="relative group">
                 <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-emerald-500 to-indigo-500 opacity-60 blur-xs animate-spin [animation-duration:8s] group-hover:opacity-80 transition-opacity" />
-                <div className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-slate-800 bg-slate-950 shadow-lg">
+                <div className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 shadow-lg">
                   {!imageError[100] ? (
                     <img 
                       src={sessionData.doctorImage.startsWith('.') ? sessionData.doctorImage.substring(1) : sessionData.doctorImage} 
@@ -389,7 +590,7 @@ export default function TelehealthRoom() {
                       onError={() => setImageError(prev => ({ ...prev, [100]: true }))}
                     />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-emerald-950 text-emerald-450 font-bold text-3xl">
+                    <div className="h-full w-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-450 font-bold text-3xl">
                       {docShortName.charAt(4)}
                     </div>
                   )}
@@ -397,19 +598,19 @@ export default function TelehealthRoom() {
                 
                 {/* Micro speech dot indicator */}
                 {isDoctorSpeaking && (
-                  <span className="absolute bottom-1 right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-500 border border-slate-900 shadow-md">
+                  <span className="absolute bottom-1 right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-500 border border-slate-950 shadow-md">
                     <span className="h-2 w-2 rounded-full bg-white animate-ping" />
                   </span>
                 )}
               </div>
 
               <div>
-                <h2 className="text-base font-extrabold text-white flex items-center justify-center gap-1.5">
+                <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
                   {docShortName}
-                  <span className="text-[10px] text-slate-500 font-normal">({docShortSpecialist})</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">({docShortSpecialist})</span>
                 </h2>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Clinical Agent • Voice: <span className="capitalize text-slate-400 font-semibold">{sessionData.doctorVoice}</span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-450 mt-0.5">
+                  Clinical Agent • Voice: <span className="capitalize text-slate-700 dark:text-slate-350 font-semibold">{sessionData.doctorVoice}</span>
                 </p>
               </div>
 
@@ -432,7 +633,7 @@ export default function TelehealthRoom() {
                     className={`w-1 rounded-full ${
                       isDoctorSpeaking 
                         ? "bg-gradient-to-t from-emerald-600 to-emerald-450" 
-                        : "bg-slate-700"
+                        : "bg-slate-300 dark:bg-slate-700"
                     }`}
                   />
                 ))}
@@ -440,27 +641,27 @@ export default function TelehealthRoom() {
             </div>
 
             {/* Picture-in-Picture patient screen overlay (You) */}
-            <div className="absolute bottom-4 right-4 w-32 h-44 sm:w-36 sm:h-50 bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl z-10 flex flex-col justify-between p-3 bg-[radial-gradient(circle_at_center,_#1e293b_0%,_#090d16_100%)] select-none">
+            <div className="absolute bottom-4 right-4 w-32 h-44 sm:w-36 sm:h-50 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xl z-10 flex flex-col justify-between p-3 bg-[radial-gradient(circle_at_center,_#f1f5f9_0%,_#e2e8f0_100%)] dark:bg-[radial-gradient(circle_at_center,_#1e293b_0%,_#090d16_100%)] select-none">
               <div className="flex justify-between items-center w-full">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">You</span>
+                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">You</span>
                 <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </div>
 
               {/* Face grid meshing placeholder simulation */}
               <div className="flex-1 flex items-center justify-center relative overflow-hidden my-1">
                 {isVideoOff ? (
-                  <VideoOff className="h-6 w-6 text-slate-650" />
+                  <VideoOff className="h-6 w-6 text-slate-400 dark:text-slate-650" />
                 ) : (
                   <div className="relative w-full h-full flex items-center justify-center">
                     {/* Pulsing scanning lines */}
                     <div className="absolute inset-x-0 h-0.5 bg-emerald-500/20 top-0 animate-[bounce_3s_infinite]" />
-                    <User className="h-10 w-10 text-slate-500" />
+                    <User className="h-10 w-10 text-slate-400 dark:text-slate-500" />
                   </div>
                 )}
               </div>
 
               <div className="w-full flex items-center justify-between">
-                <span className="text-[9px] font-bold text-slate-350 truncate max-w-[80px]">
+                <span className="text-[9px] font-bold text-slate-700 dark:text-slate-350 truncate max-w-[80px]">
                   {sessionData.patientName}
                 </span>
                 {isMuted && <MicOff className="h-3 w-3 text-rose-500" />}
@@ -468,20 +669,20 @@ export default function TelehealthRoom() {
             </div>
 
             {/* Secure connection overlay text */}
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 backdrop-blur-xs border border-slate-800/80 text-[10px] font-bold text-slate-400">
+            <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-950/80 backdrop-blur-xs border border-slate-200/80 dark:border-slate-800/80 text-[10px] font-bold text-slate-600 dark:text-slate-400">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
               End-to-End Secure
             </div>
           </div>
 
           {/* Media control dashboard overlay */}
-          <div className="bg-slate-900 border border-slate-800 px-6 py-4.5 rounded-3xl flex items-center justify-center gap-3 sm:gap-4 shrink-0 shadow-lg">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-4.5 rounded-3xl flex items-center justify-center gap-3 sm:gap-4 shrink-0 shadow-md">
             <button 
               onClick={() => setIsMuted(!isMuted)}
               className={`p-3 rounded-2xl border transition-all cursor-pointer ${
                 isMuted 
                   ? "bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-500/20" 
-                  : "bg-slate-950 border-slate-800 text-slate-350 hover:bg-slate-800 hover:text-white"
+                  : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
               }`}
               title={isMuted ? "Unmute Mic" : "Mute Mic"}
             >
@@ -493,7 +694,7 @@ export default function TelehealthRoom() {
               className={`p-3 rounded-2xl border transition-all cursor-pointer ${
                 isVideoOff 
                   ? "bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-500/20" 
-                  : "bg-slate-950 border-slate-800 text-slate-350 hover:bg-slate-800 hover:text-white"
+                  : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
               }`}
               title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
             >
@@ -505,14 +706,14 @@ export default function TelehealthRoom() {
               className={`p-3 rounded-2xl border transition-all cursor-pointer ${
                 isScreenSharing 
                   ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20" 
-                  : "bg-slate-950 border-slate-800 text-slate-350 hover:bg-slate-800 hover:text-white"
+                  : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
               }`}
               title="Share Screen"
             >
               <ScreenShare className="h-4.5 w-4.5" />
             </button>
 
-            <div className="h-7 w-px bg-slate-800 mx-2" />
+            <div className="h-7 w-px bg-slate-200 dark:bg-slate-800 mx-2" />
 
             <button 
               onClick={handleEndCall}
@@ -525,23 +726,23 @@ export default function TelehealthRoom() {
         </div>
 
         {/* Right side: Clinical Transcription Chat */}
-        <div className="lg:col-span-1 h-full flex flex-col border border-slate-800 bg-slate-900/60 rounded-3xl p-4 sm:p-5 overflow-hidden justify-between min-h-[350px]">
+        <div className="lg:col-span-1 h-full flex flex-col border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 rounded-3xl p-4 sm:p-5 overflow-hidden justify-between min-h-[350px]">
           
           {/* Transcript Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-3 shrink-0">
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-emerald-555" />
+                <MessageSquare className="h-4 w-4 text-emerald-600 dark:text-emerald-555" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider">
                   Transcription Log
                 </h3>
-                <span className="block text-[9px] text-slate-550 -mt-0.5">Real-time EHR capture</span>
+                <span className="block text-[9px] text-slate-500 dark:text-slate-500 -mt-0.5">Real-time EHR capture</span>
               </div>
             </div>
             
-            <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-500">
+            <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-500">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               ACTIVE
             </span>
@@ -549,9 +750,9 @@ export default function TelehealthRoom() {
 
           {/* Messages Flow Area */}
           <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 scrollbar-none">
-            <div className="p-3 bg-slate-950/40 rounded-xl border border-slate-800/40 flex items-start gap-2.5">
-              <Info className="h-4 w-4 text-slate-500 shrink-0 mt-0.5" />
-              <p className="text-[10px] text-slate-450 leading-relaxed">
+            <div className="p-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-slate-800/40 flex items-start gap-2.5">
+              <Info className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-slate-600 dark:text-slate-450 leading-relaxed">
                 Your voice dialogue is securely transcribed below. Add observations by typing in the chat log input.
               </p>
             </div>
@@ -567,15 +768,15 @@ export default function TelehealthRoom() {
                     className={`flex flex-col ${isDoc ? "items-start" : "items-end"} space-y-1`}
                   >
                     <div className="flex items-center gap-1.5 px-1">
-                      <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wide">
+                      <span className="text-[9px] font-bold text-slate-500 dark:text-slate-450 uppercase tracking-wide">
                         {msg.senderName}
                       </span>
-                      <span className="text-[8px] text-slate-600 font-semibold">{msg.time}</span>
+                      <span className="text-[8px] text-slate-400 dark:text-slate-600 font-semibold">{msg.time}</span>
                     </div>
 
                     <div className={`p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed ${
                       isDoc 
-                        ? "bg-slate-800/80 text-slate-200 rounded-tl-xs border border-slate-850" 
+                        ? "bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 rounded-tl-xs border border-slate-200 dark:border-slate-850" 
                         : "bg-emerald-600 text-white rounded-tr-xs shadow-xs"
                     }`}>
                       {msg.text}
@@ -593,12 +794,12 @@ export default function TelehealthRoom() {
                   className="flex flex-col items-start space-y-1"
                 >
                   <div className="flex items-center gap-1 px-1">
-                    <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wide">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-455 uppercase tracking-wide">
                       {docShortName}
                     </span>
-                    <span className="text-[9px] text-slate-550 italic font-semibold">Speaking...</span>
+                    <span className="text-[9px] text-slate-400 dark:text-slate-550 italic font-semibold">Speaking...</span>
                   </div>
-                  <div className="p-3 bg-slate-850 border border-slate-800 rounded-2xl rounded-tl-xs flex items-center gap-1 shadow-inner">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl rounded-tl-xs flex items-center gap-1 shadow-inner">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.2s]" />
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.4s]" />
@@ -612,14 +813,14 @@ export default function TelehealthRoom() {
           {/* Interactive Chat Input Bar */}
           <form 
             onSubmit={handleSendMessage}
-            className="flex items-center gap-2 pt-3 border-t border-slate-800 mt-3 shrink-0"
+            className="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800 mt-3 shrink-0"
           >
             <input
               type="text"
               placeholder="Type symptom observation..."
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-xs placeholder-slate-500 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none transition-all"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs placeholder-slate-450 dark:placeholder-slate-500 text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none transition-all"
             />
             <button
               type="submit"
