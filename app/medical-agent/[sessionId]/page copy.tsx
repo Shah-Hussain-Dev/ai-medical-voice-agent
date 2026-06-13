@@ -79,7 +79,7 @@ export default function TelehealthRoom() {
   const [callDuration, setCallDuration] = useState(0);
   const [isCallStarted, setIsCallStarted] = useState(false);
   const [isCallActive, setIsCallActive] = useState(false);
-  const [vapiInstance, setVapiInstance] = useState<any | null>(null);
+  const [vapiInstance, setVapiInstance] = useState<Vapi | null>(null);
   // Chat/Transcription states
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -88,8 +88,8 @@ export default function TelehealthRoom() {
     role: "assistant" | "user";
     text: string;
   } | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [currentRole,setCurrentRole] = useState<string>("")
 
   const getSessionDetails = async () => {
     try {
@@ -133,149 +133,28 @@ export default function TelehealthRoom() {
   };
 
   const handleStartCall = async () => {
+    // Immediately transition call UI states to preview and verify layout flows
+    setIsCallActive(true);
     setIsCallStarted(true);
 
-    try {
-      const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_API_KEY || "");
-      setVapiInstance(vapi);
-
-      const assistantId = process.env.NEXT_PUBLIC_VAPI_VOICE_ASSISTANT_ID || "2fb5c730-bdbf-425b-a9c5-7cec7e5699a0";
-      await vapi.start(assistantId);
-
-      vapi.on('call-start', () => {
-        console.log('Call started');
-        setIsCallActive(true);
-      });
-
-      vapi.on('call-end', () => {
-        console.log('Call ended');
-        setIsCallActive(false);
-        setIsCallStarted(false);
-        setVapiInstance(null);
-      });
-
-      vapi.on('error', (error) => {
-        console.error('Vapi error:', error);
-        setIsCallActive(false);
-        setIsCallStarted(false);
-        setVapiInstance(null);
-      });
-
-      vapi.on('message', (message: any) => {
-        if (message.type === 'transcript') {
-          console.log(`${message.role}: ${message.transcript}`);
-          const text = message.transcript || "";
-          const role = message.role;
-          const isFinal = message.transcriptType === 'final';
-
-          if (isFinal) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `msg-${Date.now()}-${Math.random()}`,
-                sender: role === 'assistant' ? 'doctor' : 'patient',
-                senderName: role === 'assistant' ? (sessionData?.doctorSpecialty || 'Doctor') : 'You',
-                text: text,
-                time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-              }
-            ]);
-            setActiveTranscript(null);
-          } else {
-            setActiveTranscript({
-              role: role === 'assistant' ? 'assistant' : 'user',
-              text: text
-            });
-          }
-        }
-      });
-
-        vapi.on('speech-start', () => {
-      console.log('Assistant started speaking');
-      setCurrentRole("doctor");
+    const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_API_KEY || "");
+    setVapiInstance(vapi);
+    vapi.on('call-start', () => {
+      console.log('Call started');
     });
-    vapi.on('speech-end', () => {
-      console.log('Assistant stopped speaking');
-      setCurrentRole("patient");
-    });
-    } catch (err) {
-      console.error("Failed to start Vapi call:", err);
+    vapi.on('call-end', () => {
+      console.log('Call ended');
       setIsCallActive(false);
       setIsCallStarted(false);
       setVapiInstance(null);
-    }
-  };
-
-    // Terminate and save consultation run
-  const handleEndCall = () => {
-    if (vapiInstance) {
-      try {
-        vapiInstance.stop();
-        vapiInstance.removeAllListeners();
-      } catch (err) {
-        console.error("Failed to stop Vapi client:", err);
+    });
+    vapi.on('message', (message) => {
+      if (message.type === 'transcript') {
+        console.log(`${message.role}: ${message.transcript}`);
+        setMessages((prev) => [...prev, { id: `msg-${Date.now()}`, sender: message.role === "assistant" ? "doctor" : "patient", senderName: message.role === "assistant" ? "Doctor" : "Patient", text: message.transcript, time: new Date().toLocaleTimeString() }]);
       }
-      setIsCallStarted(false)
-      setVapiInstance(null);
-    }
-
-    if (!sessionData) return;
-
-    // 1. Fetch consultations from history
-    const stored = localStorage.getItem("dashboard_consultations");
-    const consultationsList = stored ? JSON.parse(stored) : [];
-
-    const now = new Date();
-    const formattedDate = now.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
-    const formattedTime = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-
-    // Deduce custom recommendation from inputs
-    let recommendation = "Observe symptoms closely, monitor vitals, and arrange a clinical assessment within 72 hours.";
-    if (sessionData.doctorSpecialty.includes("Pediatrician")) {
-      recommendation = "Arrange pediatric clinical follow-up within 24 hours. Suggest warm hydration and symptom logging.";
-    } else if (sessionData.doctorSpecialty.includes("Cardiologist")) {
-      recommendation = "Urgent outpatient cardiologist checkup. Suggest resting, vital monitoring, and Rule-Out ischemia protocols.";
-    } else if (sessionData.doctorSpecialty.includes("Dermatologist")) {
-      recommendation = "Local dermatology observation for inflammatory rashes. Keep skin sanitized and hydrated.";
-    }
-
-    const minutes = Math.floor(callDuration / 60);
-    const seconds = callDuration % 60;
-    const duration = `${minutes}m ${seconds}s`;
-
-    const newConsultation = {
-      id: `consult-${String(Math.floor(Math.random() * 900) + 100)}`,
-      date: formattedDate,
-      time: formattedTime,
-      duration,
-      patientName: sessionData.patientName,
-      patientAge: sessionData.patientAge,
-      patientGender: sessionData.patientGender,
-      symptoms: sessionData.symptoms,
-      severity: sessionData.severity,
-      status: "Completed",
-      recommendation,
-      doctorSpecialty: sessionData.doctorSpecialty,
-      doctorImage: sessionData.doctorImage
-    };
-
-    // 2. Prepend to consultations
-    const updated = [newConsultation, ...consultationsList];
-    localStorage.setItem("dashboard_consultations", JSON.stringify(updated));
-
-    // 3. Deduct credit
-    const savedCredits = localStorage.getItem("user_credits");
-    if (savedCredits) {
-      const current = Number(savedCredits);
-      localStorage.setItem("user_credits", String(current > 0 ? current - 1 : 0));
-    }
-
-    // 4. Reset states and return to dashboard
-    setIsCallStarted(false);
-    setIsCallActive(false);
-    localStorage.removeItem("current_active_session");
-    router.push("/dashboard");
+    });
   };
-
 
   // Load session data
   useEffect(() => {
@@ -335,6 +214,65 @@ export default function TelehealthRoom() {
     setChatInput("");
   };
 
+  // Terminate and save consultation run
+  const handleEndCall = () => {
+    if (!sessionData) return;
+
+    // 1. Fetch consultations from history
+    const stored = localStorage.getItem("dashboard_consultations");
+    const consultationsList = stored ? JSON.parse(stored) : [];
+
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+    const formattedTime = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+    // Deduce custom recommendation from inputs
+    let recommendation = "Observe symptoms closely, monitor vitals, and arrange a clinical assessment within 72 hours.";
+    if (sessionData.doctorSpecialty.includes("Pediatrician")) {
+      recommendation = "Arrange pediatric clinical follow-up within 24 hours. Suggest warm hydration and symptom logging.";
+    } else if (sessionData.doctorSpecialty.includes("Cardiologist")) {
+      recommendation = "Urgent outpatient cardiologist checkup. Suggest resting, vital monitoring, and Rule-Out ischemia protocols.";
+    } else if (sessionData.doctorSpecialty.includes("Dermatologist")) {
+      recommendation = "Local dermatology observation for inflammatory rashes. Keep skin sanitized and hydrated.";
+    }
+
+    const minutes = Math.floor(callDuration / 60);
+    const seconds = callDuration % 60;
+    const duration = `${minutes}m ${seconds}s`;
+
+    const newConsultation = {
+      id: `consult-${String(Math.floor(Math.random() * 900) + 100)}`,
+      date: formattedDate,
+      time: formattedTime,
+      duration,
+      patientName: sessionData.patientName,
+      patientAge: sessionData.patientAge,
+      patientGender: sessionData.patientGender,
+      symptoms: sessionData.symptoms,
+      severity: sessionData.severity,
+      status: "Completed",
+      recommendation,
+      doctorSpecialty: sessionData.doctorSpecialty,
+      doctorImage: sessionData.doctorImage
+    };
+
+    // 2. Prepend to consultations
+    const updated = [newConsultation, ...consultationsList];
+    localStorage.setItem("dashboard_consultations", JSON.stringify(updated));
+
+    // 3. Deduct credit
+    const savedCredits = localStorage.getItem("user_credits");
+    if (savedCredits) {
+      const current = Number(savedCredits);
+      localStorage.setItem("user_credits", String(current > 0 ? current - 1 : 0));
+    }
+
+    // 4. Reset states and return to dashboard
+    setIsCallStarted(false);
+    setIsCallActive(false);
+    localStorage.removeItem("current_active_session");
+    router.push("/dashboard");
+  };
 
   const formatTimer = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -518,7 +456,7 @@ export default function TelehealthRoom() {
                       <h2 className="text-base font-extrabold text-slate-900 dark:text-white mt-1.5">
                         {docShortName}
                       </h2>
-                      <p className="text-xs text-slate-555 dark:text-slate-400 mt-0.5">
+                      <p className="text-xs text-slate-550 dark:text-slate-400 mt-0.5">
                         {docShortSpecialist} • Voice Profile: <span className="capitalize font-semibold text-slate-700 dark:text-slate-350">{sessionData.doctorVoice} Agent</span>
                       </p>
                     </div>
@@ -575,7 +513,7 @@ export default function TelehealthRoom() {
                   ) : isConnecting ? (
                     <button
                       disabled
-                      className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-850 text-slate-400 dark:text-slate-550 font-bold text-sm flex items-center justify-center gap-2.5 outline-none cursor-not-allowed border border-slate-200 dark:border-slate-800"
+                      className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-850 text-slate-400 dark:text-slate-500 font-bold text-sm flex items-center justify-center gap-2.5 outline-none cursor-not-allowed border border-slate-200 dark:border-slate-800"
                     >
                       <span className="h-4 w-4 rounded-full border-2 border-slate-450 border-t-transparent animate-spin mr-1" />
                       Connecting Securely...
@@ -583,7 +521,7 @@ export default function TelehealthRoom() {
                   ) : (
                     <button
                       disabled
-                      className="w-full py-3.5 rounded-2xl bg-emerald-605 text-white font-bold text-sm flex items-center justify-center gap-2.5 cursor-not-allowed"
+                      className="w-full py-3.5 rounded-2xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2.5 cursor-not-allowed"
                     >
                       Joined Session
                     </button>
@@ -598,17 +536,9 @@ export default function TelehealthRoom() {
     );
   }
 
-  // Active call screen with simplified clean card UI
-  const latestAssistantMsg = activeTranscript?.role === 'assistant' 
-    ? activeTranscript.text 
-    : (messages.filter(m => m.sender === 'doctor').slice(-1)[0]?.text || "Assistant Msg");
-
-  const latestUserMsg = activeTranscript?.role === 'user' 
-    ? activeTranscript.text 
-    : (messages.filter(m => m.sender === 'patient').slice(-1)[0]?.text || "User Msg");
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans select-none overflow-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col font-sans select-none overflow-hidden transition-colors duration-300">
+      
       {/* Telehealth Top bar */}
       <header className="px-6 py-4.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3.5">
@@ -622,93 +552,335 @@ export default function TelehealthRoom() {
           <div>
             <h1 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
               Telehealth Consultation
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-450 border border-emerald-500/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-450 animate-pulse" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-450 border border-emerald-500/20 animate-pulse">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-450" />
                 SECURE HIPAA LINK
               </span>
             </h1>
             <p className="text-[10px] text-slate-555 dark:text-slate-500 tracking-wide mt-0.5">
-              Room ID: <span className="font-mono text-slate-655 dark:text-slate-450">{sessionId}</span>
+              Room ID: <span className="font-mono text-slate-650 dark:text-slate-400">{sessionId}</span>
             </p>
           </div>
         </div>
 
-        <button
-          onClick={toggleTheme}
-          className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 text-slate-600 hover:text-slate-955 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-850 transition-all cursor-pointer"
-          title="Toggle Theme"
-        >
-          {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-850 transition-all cursor-pointer mr-1"
+            title="Toggle Theme"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
+          {/* Active Call Clock */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-700 dark:text-slate-350">
+            <Clock className="h-3.5 w-3.5 text-slate-450 animate-pulse" />
+            {formatTimer(callDuration)}
+          </div>
+        </div>
       </header>
 
-      {/* Main Centered Call UI Card */}
-      <div className="flex-1 flex items-center justify-center p-6 md:p-12 overflow-y-auto">
-        <div className="w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] p-8 md:p-10 shadow-xl flex flex-col justify-between min-h-[440px] md:min-h-[480px]">
-          {/* Card Top Row */}
-          <div className="flex items-center justify-between w-full">
-            {/* Connected Badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200/50 dark:border-slate-850 bg-slate-50 dark:bg-slate-950 text-[11px] font-bold text-slate-700 dark:text-slate-350 shadow-2xs">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              Connected...
-            </div>
+      {/* Main split dashboard call room */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 overflow-hidden h-[calc(100vh-5.5rem)]">
+        
+        {/* Left side: Telehealth Camera Window */}
+        <div className="lg:col-span-2 flex flex-col h-full gap-4 min-h-[350px]">
+          
+          <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex-1 flex flex-col items-center justify-center p-6 shadow-xs relative">
+            
+            {/* Ambient blur backdrop glow */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center filter blur-3xl opacity-10 dark:opacity-25 pointer-events-none scale-110 transition-all duration-700" 
+              style={{ backgroundImage: `url(${sessionData.doctorImage.startsWith('.') ? sessionData.doctorImage.substring(1) : sessionData.doctorImage})` }}
+            />
 
-            {/* Timer */}
-            <div className="text-slate-400 dark:text-slate-500 font-bold text-sm md:text-base tracking-wide font-mono">
-              {formatTimer(callDuration)}
-            </div>
-          </div>
+            {/* Pulsing visual connection effect */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(16,185,129,0.02),_transparent_60%)] pointer-events-none animate-pulse" />
 
-          {/* Centered Doctor Profile */}
-          <div className="flex flex-col items-center text-center my-auto py-6">
-            <div className="relative mb-5 group">
-              <div className="absolute -inset-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 blur-xs group-hover:bg-emerald-500/20 transition-all" />
-              <div className="relative h-24 w-24 md:h-28 md:w-28 rounded-full overflow-hidden border border-slate-200 dark:border-slate-850 bg-slate-100 dark:bg-slate-950 shadow-sm">
-                {!imageError[100] ? (
-                  <img 
-                    src={sessionData.doctorImage.startsWith('.') ? sessionData.doctorImage.substring(1) : sessionData.doctorImage} 
-                    alt={docShortName} 
-                    className="h-full w-full object-cover"
-                    onError={() => setImageError(prev => ({ ...prev, [100]: true }))}
-                  />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-450 font-bold text-3xl">
-                    {docShortName.charAt(4)}
-                  </div>
+            {/* Video status placeholder when Doctor Video is on */}
+            <div className="flex flex-col items-center justify-center space-y-5 text-center relative z-10">
+              
+              {/* Doctor Avatar */}
+              <div className="relative group">
+                <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-emerald-500 to-indigo-500 opacity-60 blur-xs animate-spin [animation-duration:8s] group-hover:opacity-80 transition-opacity" />
+                <div className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 shadow-lg">
+                  {!imageError[100] ? (
+                    <img 
+                      src={sessionData.doctorImage.startsWith('.') ? sessionData.doctorImage.substring(1) : sessionData.doctorImage} 
+                      alt={docShortName} 
+                      className="h-full w-full object-cover"
+                      onError={() => setImageError(prev => ({ ...prev, [100]: true }))}
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-450 font-bold text-3xl">
+                      {docShortName.charAt(4)}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Micro speech dot indicator */}
+                {isDoctorSpeaking && (
+                  <span className="absolute bottom-1 right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-500 border border-slate-950 shadow-md">
+                    <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+                  </span>
                 )}
+              </div>
+
+              <div>
+                <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
+                  {docShortName}
+                  <span className="text-[10px] text-slate-555 dark:text-slate-400 font-normal">({docShortSpecialist})</span>
+                </h2>
+                <p className="text-[11px] text-slate-555 dark:text-slate-400 mt-0.5">
+                  Clinical Agent • Voice: <span className="capitalize text-slate-700 dark:text-slate-350 font-semibold">{sessionData.doctorVoice}</span>
+                </p>
+              </div>
+
+              {/* Reactive speech waveform bars */}
+              <div className="h-12 flex items-center justify-center gap-1.5 px-4.5 py-2 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40 border border-slate-200/50 dark:border-slate-850/60 backdrop-blur-xs mt-3">
+                {[1.2, 2.5, 1.8, 3.2, 1.0, 2.7, 1.5, 3.5, 2.1, 1.4, 2.8, 1.1].map((delay, idx) => (
+                  <motion.span
+                    key={idx}
+                    animate={isDoctorSpeaking ? { 
+                      height: ["8px", `${((idx * 7) % 26) + 12}px`, "8px"] 
+                    } : { 
+                      height: "8px" 
+                    }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 0.9, 
+                      delay: delay * 0.1, 
+                      ease: "easeInOut" 
+                    }}
+                    className={`w-1 rounded-full ${
+                      isDoctorSpeaking 
+                        ? "bg-gradient-to-t from-emerald-650 to-emerald-400" 
+                        : "bg-slate-355 dark:bg-slate-700"
+                    }`}
+                  />
+                ))}
               </div>
             </div>
 
-            <h2 className="text-lg md:text-xl font-extrabold text-slate-850 dark:text-white tracking-tight">
-              {sessionData.doctorSpecialty}
-            </h2>
-            <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
-              AI Medical Voice Agent
-            </p>
+            {/* Picture-in-Picture patient screen overlay (You) */}
+            <div className="absolute bottom-4 right-4 w-32 h-44 sm:w-36 sm:h-50 bg-slate-100 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-2xl z-10 flex flex-col justify-between p-3 bg-[radial-gradient(circle_at_center,_#f1f5f9_0%,_#e2e8f0_100%)] dark:bg-[radial-gradient(circle_at_center,_#1e293b_0%,_#090d16_100%)] select-none transition-all duration-300 ring-2 ring-emerald-500/20 hover:ring-emerald-500/40">
+              <div className="flex justify-between items-center w-full">
+                <span className="text-[9px] font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wide">You</span>
+                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+
+              {/* Face grid meshing placeholder simulation */}
+              <div className="flex-1 flex items-center justify-center relative overflow-hidden my-1">
+                {isVideoOff ? (
+                  <VideoOff className="h-6 w-6 text-slate-405 dark:text-slate-650" />
+                ) : (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    {/* Pulsing scanning lines */}
+                    <div className="absolute inset-x-0 h-0.5 bg-emerald-500/25 top-0 animate-[bounce_3s_infinite]" />
+                    <User className="h-10 w-10 text-slate-400 dark:text-slate-500" />
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full flex items-center justify-between">
+                <span className="text-[9px] font-bold text-slate-700 dark:text-slate-350 truncate max-w-[80px]">
+                  {sessionData.patientName}
+                </span>
+                {isMuted && <MicOff className="h-3 w-3 text-rose-500" />}
+              </div>
+            </div>
+
+            {/* Secure connection overlay text */}
+            <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-950/80 backdrop-blur-xs border border-slate-200/80 dark:border-slate-800/80 text-[10px] font-bold text-slate-650 dark:text-slate-400">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              End-to-End Secure
+            </div>
           </div>
 
-          {/* Bottom Dialog Message Box */}
-          <div className="flex flex-col items-center text-center space-y-2.5 my-4 max-w-xl mx-auto w-full px-4">
-            <p className="text-slate-400 dark:text-slate-550 text-xs md:text-sm tracking-wide leading-relaxed font-semibold italic min-h-[20px] transition-all duration-300">
-              {latestAssistantMsg}
-            </p>
-            <p className="text-slate-800 dark:text-slate-200 text-base md:text-lg font-bold tracking-tight leading-relaxed min-h-[28px] transition-all duration-300">
-              {latestUserMsg}
-            </p>
-          </div>
-
-          {/* Disconnect Control */}
-          <div className="flex justify-center mt-4 shrink-0">
-            <button
-              onClick={handleEndCall}
-              className="px-6 py-3.5 rounded-xl bg-[#df0000] hover:bg-red-750 text-white font-extrabold text-xs md:text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-650/15 transition-all duration-200 active:scale-[0.98] cursor-pointer"
+          {/* Media control dashboard overlay */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-4.5 rounded-3xl flex items-center justify-center gap-3 sm:gap-4 shrink-0 shadow-md">
+            <button 
+              onClick={() => setIsMuted(!isMuted)}
+              className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                isMuted 
+                  ? "bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-500/20" 
+                  : "bg-slate-50 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-805 hover:text-slate-950 dark:hover:text-white"
+              }`}
+              title={isMuted ? "Unmute Mic" : "Mute Mic"}
             >
-              <PhoneOff className="h-4.5 w-4.5" />
-              Disconnect
+              {isMuted ? <MicOff className="h-4.5 w-4.5" /> : <Mic className="h-4.5 w-4.5" />}
+            </button>
+
+            <button 
+              onClick={() => setIsVideoOff(!isVideoOff)}
+              className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                isVideoOff 
+                  ? "bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-500/20" 
+                  : "bg-slate-50 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-805 hover:text-slate-955 dark:hover:text-white"
+              }`}
+              title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
+            >
+              {isVideoOff ? <VideoOff className="h-4.5 w-4.5" /> : <VideoIcon className="h-4.5 w-4.5" />}
+            </button>
+
+            <button 
+              onClick={() => setIsScreenSharing(!isScreenSharing)}
+              className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                isScreenSharing 
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20" 
+                  : "bg-slate-50 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-805 hover:text-slate-955 dark:hover:text-white"
+              }`}
+              title="Share Screen"
+            >
+              <ScreenShare className="h-4.5 w-4.5" />
+            </button>
+
+            <div className="h-7 w-px bg-slate-200 dark:bg-slate-800 mx-2" />
+
+            <button 
+              onClick={handleEndCall}
+              className="px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-rose-600/10 cursor-pointer active:scale-[0.98]"
+            >
+              <PhoneOff className="h-4 w-4" />
+              End Consultation
             </button>
           </div>
+        </div>
+
+        {/* Right side: Clinical Transcription Chat */}
+        <div className="lg:col-span-1 h-full flex flex-col border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 rounded-3xl p-4 sm:p-5 overflow-hidden justify-between min-h-[350px]">
+          
+          {/* Transcript Header */}
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <MessageSquare className="h-4 w-4 text-emerald-600 dark:text-emerald-555" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider">
+                  Transcription Log
+                </h3>
+                <span className="block text-[9px] text-slate-500 dark:text-slate-500 -mt-0.5">Real-time EHR capture</span>
+              </div>
+            </div>
+            
+            <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 dark:text-emerald-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              ACTIVE
+            </span>
+          </div>
+
+          {/* Messages Flow Area */}
+          <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 scrollbar-none">
+            <div className="p-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-slate-800/40 flex items-start gap-2.5">
+              <Info className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-slate-655 dark:text-slate-400 leading-relaxed">
+                Your voice dialogue is securely transcribed below. Add observations by typing in the chat log input.
+              </p>
+            </div>
+
+            <AnimatePresence initial={false}>
+              {messages.map((msg) => {
+                const isDoc = msg.sender === "doctor";
+                return (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`flex flex-col ${isDoc ? "items-start" : "items-end"} space-y-1`}
+                  >
+                    <div className="flex items-center gap-1.5 px-1">
+                      <span className="text-[9px] font-bold text-slate-505 dark:text-slate-450 uppercase tracking-wide">
+                        {msg.senderName}
+                      </span>
+                      <span className="text-[8px] text-slate-450 dark:text-slate-600 font-semibold">{msg.time}</span>
+                    </div>
+
+                    <div className={`p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed ${
+                      isDoc 
+                        ? "bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-205 rounded-tl-xs border border-slate-200 dark:border-slate-850" 
+                        : "bg-emerald-605 text-white rounded-tr-xs shadow-xs"
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              {/* Streaming active transcript */}
+              {activeTranscript && activeTranscript.text.trim() && (
+                <motion.div
+                  key="active-transcript"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex flex-col ${activeTranscript.role === 'assistant' ? "items-start" : "items-end"} space-y-1`}
+                >
+                  <div className="flex items-center gap-1.5 px-1">
+                    <span className="text-[9px] font-bold text-slate-505 dark:text-slate-455 uppercase tracking-wide">
+                      {activeTranscript.role === 'assistant' ? docShortName : "You"}
+                    </span>
+                    <span className="text-[8px] text-emerald-500 font-semibold italic animate-pulse">Streaming...</span>
+                  </div>
+
+                  <div className={`p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed ${
+                    activeTranscript.role === 'assistant' 
+                      ? "bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-205 rounded-tl-xs border border-slate-200 dark:border-slate-850" 
+                      : "bg-emerald-605 text-white rounded-tr-xs shadow-xs"
+                  }`}>
+                    {activeTranscript.text}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Typing indicator */}
+              {isDoctorSpeaking && (!activeTranscript || activeTranscript.role !== 'assistant') && (
+                <motion.div
+                  key="typing-indicator"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-start space-y-1"
+                >
+                  <div className="flex items-center gap-1 px-1">
+                    <span className="text-[9px] font-bold text-slate-505 dark:text-slate-455 uppercase tracking-wide">
+                      {docShortName}
+                    </span>
+                    <span className="text-[9px] text-slate-400 dark:text-slate-550 italic font-semibold">Speaking...</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl rounded-tl-xs flex items-center gap-1 shadow-inner">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.2s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.4s]" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Interactive Chat Input Bar */}
+          <form 
+            onSubmit={handleSendMessage}
+            className="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800 mt-3 shrink-0"
+          >
+            <input
+              type="text"
+              placeholder="Type symptom observation..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs placeholder-slate-450 dark:placeholder-slate-500 text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none transition-all"
+            />
+            <button
+              type="submit"
+              disabled={!chatInput.trim()}
+              className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors shadow-xs shrink-0 cursor-pointer active:scale-95"
+            >
+              <Send className="h-3.5 w-3.5" />
+            </button>
+          </form>
         </div>
       </div>
     </div>
   );
-};
+}
