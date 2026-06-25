@@ -242,6 +242,7 @@ export default function TelehealthRoom() {
 
     const newConsultation = {
       id: `consult-${String(Math.floor(Math.random() * 900) + 100)}`,
+      sessionId,
       date: formattedDate,
       time: formattedTime,
       duration,

@@ -11,6 +11,7 @@ import {
   HelpCircle
 } from "lucide-react";
 import { motion } from "motion/react";
+import { PricingTable } from "@clerk/nextjs";
 
 const pricingPackages = [
   {
@@ -80,7 +81,7 @@ const faqs = [
   },
 ];
 
-export default function PricingPage() {
+export default function BillingPage() {
   const userDetails = useContext(UserDetailsContext);
 
   return (
@@ -110,7 +111,7 @@ export default function PricingPage() {
               <Coins className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
               Current Balance:
             </div>
-            <div className="bg-emerald-650 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+            <div className="bg-emerald-650 text-dark px-3 py-1 rounded-full text-xs font-bold shadow-md">
               {userDetails.credits} Credits Available
             </div>
           </motion.div>
@@ -118,8 +119,8 @@ export default function PricingPage() {
       </div>
 
       {/* Pricing Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16">
-        {pricingPackages.map((pkg, idx) => (
+      <div className=" mb-16">
+        {/* {pricingPackages.map((pkg, idx) => (
           <motion.div
             key={pkg.id}
             initial={{ opacity: 0, y: 20 }}
@@ -131,14 +132,14 @@ export default function PricingPage() {
                 : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
             }`}
           >
-            {/* Savings tag */}
+          
             {pkg.savings && (
               <span className="absolute -top-3 right-6 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
                 {pkg.savings}
               </span>
             )}
 
-            {/* Popular label */}
+          
             {pkg.popular && (
               <span className="absolute -top-3 left-6 bg-slate-950 dark:bg-white dark:text-slate-950 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
                 Most Popular
@@ -155,7 +156,7 @@ export default function PricingPage() {
 
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{pkg.price}</span>
-                <span className="text-xs text-slate-550 font-semibold uppercase tracking-wider">one-time</span>
+                <span className="text-xs text-slate-555 font-semibold uppercase tracking-wider">one-time</span>
               </div>
 
               <p className="text-xs font-bold text-emerald-650 dark:text-emerald-400 mb-4 flex items-center gap-1">
@@ -163,7 +164,7 @@ export default function PricingPage() {
                 Adds +{pkg.credits} Consultation Credits
               </p>
 
-              <p className="text-sm text-slate-500 mb-6">{pkg.description}</p>
+              <p className="text-sm text-slate-550 mb-6">{pkg.description}</p>
 
               <hr className="border-slate-100 dark:border-slate-850 mb-6" />
 
@@ -185,7 +186,9 @@ export default function PricingPage() {
               Purchase Credits
             </button>
           </motion.div>
-        ))}
+        ))} */}
+
+           <PricingTable/>
       </div>
 
       {/* HIPAA Trust Banner */}

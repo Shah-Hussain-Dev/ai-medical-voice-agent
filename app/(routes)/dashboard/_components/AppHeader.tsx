@@ -25,7 +25,7 @@ const AppHeader = () => {
   const menuItems = [
     { name: "Home", href: "/dashboard", icon: Home },
     { name: "History", href: "/dashboard/history", icon: HistoryIcon },
-    { name: "Pricing", href: "/dashboard/pricing", icon: CreditCard },
+    { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
     { name: "Profile", href: "/dashboard/profile", icon: User },
   ];
 

@@ -6,13 +6,16 @@ import {
   Filter, 
   Calendar, 
   ChevronRight, 
-  Volume2, 
   FileText,
   Clock,
   CheckCircle,
-  Activity
+  Activity,
+  MessageSquare
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useUser } from "@clerk/nextjs";
+import ReportBottomSheet from "@/components/ReportBottomSheet";
+import ReportModal from "@/components/ReportModal";
 
 // Mock data for clinical triage history
 const MOCK_HISTORY = [
@@ -88,22 +91,82 @@ interface Consultation {
 }
 
 export default function HistoryPage() {
+  const { user, isLoaded } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSeverity, setFilterSeverity] = useState("All");
   const [history, setHistory] = useState<Consultation[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedConsultation, setSelectedConsultation] = useState<any>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsClient(true);
-      const stored = localStorage.getItem("dashboard_consultations");
-      if (stored) {
-        setHistory(JSON.parse(stored));
-      } else {
-        setHistory(MOCK_HISTORY);
-      }
-    }, 0);
+    const stored = localStorage.getItem("dashboard_consultations");
+    if (stored) {
+      setHistory(JSON.parse(stored));
+    } else {
+      setHistory(MOCK_HISTORY);
+    }
+    setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+
+    const fetchDbSessions = async () => {
+      try {
+        const response = await fetch("/api/create-session");
+        const resData = await response.json();
+        if (resData?.success && Array.isArray(resData?.data)) {
+          const dbSessions = resData.data.map((dbSession: any) => {
+            let notesObj: any = {};
+            try {
+              notesObj = typeof dbSession.notes === "string" ? JSON.parse(dbSession.notes) : dbSession.notes;
+            } catch (e) {
+              console.error("Error parsing session notes:", e);
+            }
+
+            let reportObj: any = {};
+            try {
+              reportObj = typeof dbSession.report === "string" ? JSON.parse(dbSession.report) : dbSession.report;
+            } catch (e) {
+              // not JSON or parsing failed
+            }
+
+            const now = new Date(dbSession.createdOn || Date.now());
+            const dateStr = now.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+            const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+            return {
+              id: dbSession.sessionId,
+              sessionId: dbSession.sessionId,
+              date: dateStr,
+              time: timeStr,
+              duration: notesObj.duration || "N/A",
+              patientName: notesObj.patientName || "Anonymous",
+              patientAge: notesObj.patientAge || "",
+              patientGender: notesObj.patientGender || "",
+              symptoms: notesObj.symptoms || "",
+              severity: notesObj.severity || "Moderate",
+              status: "Completed",
+              recommendation: reportObj?.recommendations?.[0] || notesObj.recommendation || "Observe symptoms closely and follow up.",
+              doctorSpecialty: notesObj.doctorSpecialty || dbSession.selectedDoctor?.specialist || "General Physician",
+              doctorImage: notesObj.doctorImage || dbSession.selectedDoctor?.image || "/images/doctor1.png",
+              report: dbSession.report || null,
+              conversation: dbSession.conversation || []
+            };
+          });
+
+          setHistory(dbSessions);
+          localStorage.setItem("dashboard_consultations", JSON.stringify(dbSessions));
+        }
+      } catch (err) {
+        console.error("Failed to sync history with backend DB:", err);
+      }
+    };
+
+    fetchDbSessions();
+  }, [isLoaded, user]);
 
   const filteredHistory = history.filter((item) => {
     const matchesSearch = 
@@ -282,15 +345,26 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Right side buttons */}
-                <div className="flex sm:flex-row lg:flex-col items-center justify-end gap-2.5 border-t lg:border-t-0 border-slate-100 dark:border-slate-850 pt-4 lg:pt-0 shrink-0">
-                  <button className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 dark:text-slate-300 dark:hover:text-white dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:border-slate-750 transition-colors w-full sm:w-auto text-center justify-center cursor-pointer">
-                    <Volume2 className="h-3.5 w-3.5 text-slate-500" />
-                    Play Audio
-                  </button>
-                  <button className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm transition-all w-full sm:w-auto text-center justify-center cursor-pointer">
+                <div className="flex flex-row items-center justify-end gap-2.5 border-t lg:border-t-0 border-slate-100 dark:border-slate-855 pt-4 lg:pt-0 shrink-0 w-full lg:w-auto">
+                  <button 
+                    onClick={() => {
+                      setSelectedConsultation(item);
+                      setIsReportOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all w-full sm:w-auto text-center justify-center cursor-pointer"
+                  >
                     <FileText className="h-3.5 w-3.5" />
                     Full Report
-                    <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setSelectedConsultation(item);
+                      setIsChatOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-450 border border-emerald-250 dark:border-emerald-800/80 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all w-full sm:w-auto text-center justify-center cursor-pointer"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Chat History
                   </button>
                 </div>
               </div>
@@ -298,6 +372,22 @@ export default function HistoryPage() {
           ))
         )}
       </div>
+
+      <ReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        consultation={selectedConsultation}
+        onOpenChat={() => {
+          setIsReportOpen(false);
+          setIsChatOpen(true);
+        }}
+      />
+
+      <ReportBottomSheet
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        consultation={selectedConsultation}
+      />
     </main>
   );
 }

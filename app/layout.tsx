@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider afterSignOutUrl="/">
-      <html lang="en" className={`${sourceSans.variable} ${ibmMono.variable} h-full antialiased`}>
+      <html lang="en" className={`${sourceSans.variable} ${ibmMono.variable} h-full antialiased`} suppressHydrationWarning>
         <body className="min-h-full font-sans bg-slate-50 text-slate-950">
           <Provider>{children}</Provider>
         </body>

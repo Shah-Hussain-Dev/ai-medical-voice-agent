@@ -18,6 +18,7 @@ import {
   Brain, 
   Star
 } from "lucide-react";
+import { PricingTable } from "@clerk/nextjs";
 
 const features = [
   {
@@ -541,67 +542,15 @@ function Pricing() {
             💰 Simple Billing
           </span>
           <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Pay-As-You-Go Credit Pricing
+            Pricing Plans
           </h2>
           <p className="text-sm text-slate-500 mt-2">
             No recurring contracts, no monthly setup fees. Buy consultation credits only when you need them.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.08 }}
-              className={`relative rounded-xl border bg-white p-6 shadow-sm dark:bg-slate-900 flex flex-col justify-between transition-all duration-350 ${
-                plan.popular 
-                  ? "border-emerald-500 dark:border-emerald-600 ring-2 ring-emerald-500/20 scale-[1.02] md:translate-y-[-4px]" 
-                  : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-              }`}
-            >
-              {plan.popular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-950 dark:bg-white dark:text-slate-950 text-white text-[10px] font-bold px-3 py-1 shadow-sm">
-                  Most Popular
-                </span>
-              )}
-
-              <div>
-                <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 mb-4">{plan.name}</h3>
-
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{plan.price}</span>
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">One-time</span>
-                </div>
-
-                <p className="text-xs text-slate-500 mb-6">{plan.description}</p>
-
-                <hr className="border-slate-100 dark:border-slate-850 mb-6" />
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, fIdx) => (
-                    <li key={fIdx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-350">
-                      <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-450 shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <Link
-                href="/dashboard"
-                className={`w-full py-3 rounded-lg text-xs sm:text-sm font-bold text-center transition-all shadow-sm block ${
-                  plan.popular 
-                    ? "bg-emerald-700 hover:bg-emerald-800 text-white" 
-                    : "bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-white border border-slate-200/80 dark:border-slate-750"
-                }`}
-              >
-                {plan.cta}
-              </Link>
-            </motion.div>
-          ))}
+        <div className="">
+          <PricingTable/>
         </div>
 
       </div>
